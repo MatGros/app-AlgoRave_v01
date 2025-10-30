@@ -130,6 +130,13 @@ masterReset()`;
         // Initialize visualizer
         window.visualizer.init();
 
+        // Initialize psychedelic visuals (wait for canvas to be ready)
+        if (window.psychedelicVisuals) {
+            console.log('✓ Psychedelic visuals object exists');
+        } else {
+            console.warn('❌ Psychedelic visuals object not found');
+        }
+
         // Setup UI update functions
         this.setupUIUpdates();
 
@@ -629,6 +636,11 @@ masterReset()`;
             tempoSpan.textContent = `${window.scheduler.bpm} BPM`;
         }
 
+        // Start psychedelic visuals
+        if (window.psychedelicVisuals) {
+            window.psychedelicVisuals.start();
+        }
+
         this.log('▶ Playback started', 'success');
     }
 
@@ -642,6 +654,11 @@ masterReset()`;
         document.getElementById('statusText').textContent = 'stopped';
         document.getElementById('cycleCount').textContent = 'cycle: 0';
         document.querySelector('.status').classList.remove('running');
+
+        // Stop psychedelic visuals
+        if (window.psychedelicVisuals) {
+            window.psychedelicVisuals.stop();
+        }
 
         // Update active patterns
         if (window.updateActivePatterns) {

@@ -135,6 +135,14 @@ class MasterBus {
     }
 
     /**
+     * Get the output node for the master chain (for analysis)
+     */
+    getOutput() {
+        // Return the last effect in the chain (delay output)
+        return this.effects.delay || this.chain;
+    }
+
+    /**
      * Set master low-pass filter frequency
      * @param {number} freq - Frequency in Hz (20-20000)
      */

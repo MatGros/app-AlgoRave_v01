@@ -755,6 +755,91 @@ body {
     }
 }
 
+/* ===== PSYCHEDELIC POPUP ===== */
+
+.psychedelic-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1000px;
+    height: 800px;
+    background: #1a1a1a;
+    border: 2px solid var(--accent-green);
+    border-radius: 8px;
+    box-shadow: 0 0 30px rgba(0, 255, 136, 0.5), 0 0 60px rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    resize: both;
+    overflow: hidden;
+    touch-action: none;
+    cursor: grab;
+}
+
+.psychedelic-popup.dragging {
+    cursor: grabbing;
+}
+
+.psychedelic-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: rgba(0, 255, 136, 0.1);
+    border-bottom: 1px solid var(--accent-green);
+    user-select: none;
+    cursor: grab;
+}
+
+.psychedelic-popup-header h3 {
+    margin: 0;
+    color: var(--accent-green);
+    font-size: 1.1em;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    color: var(--accent-green);
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0 5px;
+    transition: all 0.2s;
+}
+
+.btn-close:hover {
+    color: #FFFFFF;
+    text-shadow: 0 0 10px var(--accent-green);
+}
+
+#psychedelicCanvasPopup {
+    flex: 1;
+    display: block;
+    background: #000;
+}
+
+.btn-popup {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, var(--accent-green), #00FF88);
+    border: 1px solid var(--accent-green);
+    color: #000;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-popup:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px var(--accent-green);
+}
+
+.btn-popup:active {
+    transform: scale(0.98);
+}
+
 /* ===== METRONOME LED ===== */
 
 .metronome-led {
@@ -767,7 +852,7 @@ body {
 }
 
 .metronome-led.pulse {
-    animation: metronomePulse 1.8s ease-out forwards;
+    animation: metronomePulse 0.2s ease-out forwards;
     background: var(--accent-green);
     box-shadow: 0 0 8px var(--accent-green), inset 0 1px 2px rgba(0, 255, 136, 0.3);
 }
@@ -778,15 +863,10 @@ body {
         box-shadow: 0 0 16px var(--accent-green), inset 0 1px 2px rgba(0, 255, 136, 0.8);
         transform: scale(1.3);
     }
-    5% {
+    20% {
         background: var(--accent-green);
-        box-shadow: 0 0 12px var(--accent-green), inset 0 1px 2px rgba(0, 255, 136, 0.6);
-        transform: scale(1.1);
-    }
-    15% {
-        background: rgba(0, 255, 136, 0.6);
-        box-shadow: 0 0 6px var(--accent-green);
-        transform: scale(1);
+        box-shadow: 0 0 10px var(--accent-green), inset 0 1px 2px rgba(0, 255, 136, 0.5);
+        transform: scale(1.05);
     }
     100% {
         background: #444;

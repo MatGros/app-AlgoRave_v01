@@ -84,6 +84,11 @@ class PatternScheduler {
             
             // Add class back immediately
             led.classList.add('pulse');
+
+            // Trigger beat pulse for psychedelic visuals
+            if (window.psychedelicVisuals) {
+                window.psychedelicVisuals.onBeat();
+            }
         } catch (e) {
             // Silently ignore errors
         }
@@ -177,26 +182,40 @@ class PatternScheduler {
         this.isPlaying = true;
         this.currentCycle = 0;
 
-        // Start a reliable metronome timer (independent of Tone.Transport)
-        // At 135 BPM: 1 cycle/measure = 1.778 seconds
-        const cycleDurationMs = (60000 / this.bpm) * 4; // 4 beats per cycle
+        // Start a high-precision metronome timer with drift compensation
+        // At 135 BPM: 1 beat = 444ms (pulse 4 times per measure)
+        const beatDurationMs = 60000 / this.bpm; // milliseconds per beat
+        const cycleDurationMs = beatDurationMs * 4; // 4 beats per cycle
         
-        let lastPulseTime = Date.now();
-        this.metronomeInterval = setInterval(() => {
-            if (this.isPlaying) {
-                const now = Date.now();
-                const actualInterval = now - lastPulseTime;
-                console.log(`⏱️ LED pulse (actual interval: ${actualInterval}ms, expected: ${cycleDurationMs.toFixed(0)}ms)`);
-                lastPulseTime = now;
-                
-                // Pulse LED IMMEDIATELY when timer fires (perfect sync)
-                this.pulseMetronome();
-                
-                // Trigger patterns with tiny offset (0.05s) for audio system to process
-                const toneNow = Tone.now();
-                this.scheduleCycle(toneNow + 0.05); // Small 50ms buffer for audio processing
+        // Use high-precision timing with drift correction
+        let beatCounter = 0;
+        let expectedTime = Date.now() + beatDurationMs;
+        
+        const tick = () => {
+            if (!this.isPlaying) return;
+            
+            const now = Date.now();
+            const drift = now - expectedTime;
+            
+            // Pulse LED on every beat
+            this.pulseMetronome();
+            
+            // Trigger cycle pattern only on beat 1 of 4
+            beatCounter++;
+            if (beatCounter >= 4) {
+                beatCounter = 0;
+                // Use immediate time - let Tone.js handle the minimal scheduling needed
+                this.scheduleCycle(Tone.now());
             }
-        }, cycleDurationMs);
+            
+            // Schedule next tick with drift compensation
+            expectedTime += beatDurationMs;
+            const nextInterval = Math.max(0, beatDurationMs - drift);
+            this.metronomeInterval = setTimeout(tick, nextInterval);
+        };
+        
+        // Start the first tick
+        this.metronomeInterval = setTimeout(tick, beatDurationMs);
 
         console.log('Playback started');
         console.log(`Metronome interval: ${cycleDurationMs.toFixed(0)}ms at ${this.bpm} BPM`);
@@ -214,7 +233,7 @@ class PatternScheduler {
 
         // Stop the metronome timer
         if (this.metronomeInterval) {
-            clearInterval(this.metronomeInterval);
+            clearTimeout(this.metronomeInterval);
             this.metronomeInterval = null;
         }
 
@@ -228,16 +247,15 @@ class PatternScheduler {
         this.bpm = Math.max(60, Math.min(200, bpm));
         Tone.Transport.bpm.value = this.bpm;
         
-        // If playing, restart the metronome interval with new BPM
-        if (this.isPlaying && this.metronomeInterval) {
-            clearInterval(this.metronomeInterval);
-            
-            const cycleDurationMs = (60000 / this.bpm) * 4; // 4 beats per cycle
-            this.metronomeInterval = setInterval(() => {
-                if (this.isPlaying) {
-                    this.pulseMetronome();
-                }
-            }, cycleDurationMs);
+        // If playing, restart the metronome with new BPM
+        // Just stop and restart - the new timing will be picked up automatically
+        if (this.isPlaying) {
+            const wasPlaying = true;
+            this.stop();
+            if (wasPlaying) {
+                // Use setTimeout to ensure clean restart
+                setTimeout(() => this.start(), 10);
+            }
         }
         
         console.log(`BPM set to ${this.bpm}`);

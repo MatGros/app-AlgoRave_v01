@@ -171,9 +171,17 @@ class Visualizer {
         ctx.fillRect(0, 0, width, height);
 
         // Create analyser if needed
-        if (!this.analyser && window.synthEngine && window.synthEngine.masterGain) {
+        // Connect directly to Tone.Destination to capture all audio
+        if (!this.analyser) {
             this.analyser = new Tone.Analyser('waveform', 512);
-            window.synthEngine.masterGain.connect(this.analyser);
+            
+            try {
+                // Connect analyser in parallel to Destination (captures everything being output)
+                Tone.Destination.fan(this.analyser);
+                console.log('✓ Analyser connected to Tone.Destination');
+            } catch (e) {
+                console.warn('Could not connect analyser:', e.message);
+            }
         }
 
         if (!this.analyser) {
@@ -199,6 +207,27 @@ class Visualizer {
         
         // Get waveform data - higher resolution for better visualization
         const waveform = this.analyser.getValue();
+
+        // Calculate audio level for psychedelic visuals (RMS + Peak detection)
+        if (window.psychedelicVisuals && waveform && waveform.length > 0) {
+            // Calculate RMS (Root Mean Square) for average level
+            let sumSquares = 0;
+            let peakLevel = 0;
+            for (let i = 0; i < waveform.length; i++) {
+                const sample = Math.abs(waveform[i]);
+                sumSquares += sample * sample;
+                peakLevel = Math.max(peakLevel, sample);
+            }
+            const rmsLevel = Math.sqrt(sumSquares / waveform.length);
+            
+            // Use peak for immediate responsiveness, with some RMS for stability
+            const audioLevel = Math.max(rmsLevel * 0.7, peakLevel * 0.3);
+            
+            // Normalize to 0-1 range
+            const normalizedLevel = Math.min(1, audioLevel * 2); // Multiply by 2 to amplify reactivity
+            
+            window.psychedelicVisuals.updateAudioLevel(normalizedLevel);
+        }
 
         // Draw grid lines (beat markers)
         ctx.strokeStyle = '#333';

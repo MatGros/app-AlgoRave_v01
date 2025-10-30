@@ -14,18 +14,16 @@ class SampleLibrary {
 
         // Configuration: which samples to try loading
         this.sampleConfig = {
-            // Drum samples with numbered variations (will try 0-9)
+            // Drum samples with numbered variations
             drums: {
-                'bd': { folder: 'kicks', count: 6, aliases: ['kick'] }
-                // Add more when you have snares, hats, percs samples
-                // 'sd': { folder: 'snares', count: 10, aliases: ['snare'] },
-                // 'hh': { folder: 'hats', count: 10, aliases: ['hihat'] },
-                // 'cp': { folder: 'percs', count: 10, aliases: ['clap'] },
-                // 'oh': { folder: 'percs', count: 10, aliases: ['openhh'] }
+                'bd': { folder: 'kicks', count: 5, aliases: ['kick'] },
+                'sd': { folder: 'snares', count: 3, aliases: ['snare'] },
+                'hh': { folder: 'hats', count: 3, aliases: ['hat', 'hihat'] },
+                'bass': { folder: 'bass', count: 5, aliases: ['bass'] }
             },
             // Custom samples (add your own here!)
             custom: [
-                // Examples: 'bass', 'lead', 'vocal', 'fx'
+                // Examples: 'lead', 'vocal', 'fx'
             ]
         };
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ALGORAVE - Live Coding Music for Fun and Learning</title>
+    <title>MusicAlgoCoding - Live Coding Music for Fun and Learning</title>
 
     <!-- CodeMirror CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
@@ -17,7 +17,7 @@
         <!-- Header -->
         <header class="header">
             <div class="header-left">
-                <h1 class="logo">▶ ALGORAVE</h1>
+                <h1 class="logo">▶ MusicAlgoCoding</h1>
                 <span class="tagline">live coding music for fun and learning</span>
             </div>
             <div class="header-right">
@@ -45,21 +45,21 @@
                     <span class="help-text">Ctrl+Enter: evaluate line or selection | Ctrl+.: stop selected lines | Ctrl+Space: autocomplete</span>
                     <button id="resetCodeBtn" class="btn-reset" title="Restore default code">Reset Code</button>
                 </div>
-                <textarea id="codeEditor">// PSYCHEDELIC PROGRESSIVE - 138 BPM ��🎵
+                <textarea id="codeEditor">// PSYCHEDELIC PROGRESSIVE - 135 BPM 🎵🎵
 // 1. Click START first!
 // 2. Press Ctrl+Enter on each line to build the track
 // 3. Modify and re-evaluate to change patterns live!
 
 // ====== MINIMAL INTRO - Build up slowly ======
 
-// Powerful kick (loud and centered)
-d1(s("bd*4").gain(0.85))
+// Powerful kick (custom sample kick1-5)
+d1(s("kick1*4").gain(0.85))
 
-// Deep rolling bassline (FM synthesis magic)
-d2(note("c1 ~ c1 ~ d1 ~ c1 ~ eb1 ~ c1 ~ d1 ~ f1 ~").s("fm").gain(0.5).lpf(700))
+// Deep bass samples (psytrance rolling bassline bass1-5)
+d2(s("bass1 ~ bass1 ~ bass2 ~ bass1 ~ bass3 ~ bass1 ~ bass2 ~ bass4 ~").gain(0.65))
 
-// Soft hi-hats background (panned right)
-d3(s("hh*8").gain(0.25).pan(0.7))
+// Soft hi-hats background (custom samples hat1-3)
+d3(s("hat1*8").gain(0.25).pan(0.7))
 
 // ====== ADD ENERGY - Progressive layers ======
 
@@ -173,6 +173,24 @@ d6(silence())
             <!-- Visualization Panel -->
             <aside class="viz-panel">
                 <div class="panel-section">
+                    <h3>Pattern Timeline</h3>
+                    <canvas id="timeline" width="450" height="200"></canvas>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Oscilloscope</h3>
+                    <canvas id="scope" width="450" height="100"></canvas>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Psychedelic Visuals 🌀</h3>
+                    <button id="psychedelicPopupBtn" class="btn-popup">
+                        🔍 Fullscreen Visuals
+                    </button>
+                    <canvas id="psychedelicCanvas" width="450" height="200" style="display: none;"></canvas>
+                </div>
+
+                <div class="panel-section">
                     <h3>Audio Info</h3>
                     <div class="audio-info" style="font-size: 0.75em; color: #808080;">
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
@@ -218,16 +236,6 @@ d6(silence())
                 </div>
 
                 <div class="panel-section">
-                    <h3>Pattern Timeline</h3>
-                    <canvas id="timeline" width="450" height="200"></canvas>
-                </div>
-
-                <div class="panel-section">
-                    <h3>Oscilloscope</h3>
-                    <canvas id="scope" width="450" height="100"></canvas>
-                </div>
-
-                <div class="panel-section">
                     <h3>Active Patterns</h3>
                     <div id="activePatterns" class="pattern-list">
                         <div class="pattern-item empty">No patterns running</div>
@@ -268,7 +276,7 @@ d6(silence())
                 <button id="clearConsole" class="btn-clear">Clear</button>
             </div>
             <div id="consoleOutput" class="console-output">
-                <div class="console-line success">✓ AlgoRave engine loaded</div>
+                <div class="console-line success">✓ MusicAlgoCoding engine loaded</div>
                 <div class="console-line info">♪ Ready to code music...</div>
             </div>
         </div>
@@ -278,24 +286,21 @@ d6(silence())
     <div id="helpModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>ALGORAVE - Help & Examples</h2>
+                <h2>MusicAlgoCoding - Help & Examples</h2>
                 <button class="modal-close" id="closeHelpBtn">&times;</button>
             </div>
             <div class="modal-body">
                 <section class="help-section">
-                    <h3>🎵 Samples Disponibles (Drums)</h3>
+                    <h3>🎵 Samples Audio Disponibles</h3>
                     <div class="samples-grid">
-                        <div class="sample-item"><code>bd</code> - Bass Drum / Kick</div>
-                        <div class="sample-item"><code>sd</code> - Snare Drum</div>
-                        <div class="sample-item"><code>hh</code> - Hi-Hat</div>
-                        <div class="sample-item"><code>cp</code> - Clap</div>
-                        <div class="sample-item"><code>oh</code> - Open Hi-Hat</div>
-                        <div class="sample-item"><code>kick</code> - Bass Drum</div>
-                        <div class="sample-item"><code>snare</code> - Snare Drum</div>
-                        <div class="sample-item"><code>hihat</code> - Hi-Hat</div>
-                        <div class="sample-item"><code>clap</code> - Clap</div>
-                        <div class="sample-item"><code>openhh</code> - Open Hi-Hat</div>
+                        <div class="sample-item"><code>kick1</code> à <code>kick5</code> - Kicks psytrance</div>
+                        <div class="sample-item"><code>snare1</code> à <code>snare3</code> - Snares</div>
+                        <div class="sample-item"><code>hat1</code> à <code>hat3</code> - Hi-hats</div>
+                        <div class="sample-item"><code>bass1</code> à <code>bass5</code> - 🆕 Bass psytrance</div>
                     </div>
+                    <p style="margin-top: 1rem; font-size: 0.9em; opacity: 0.8;">
+                        💡 Astuce: <code>s("kick1 kick2 kick3")</code> alterne entre les samples
+                    </p>
                 </section>
 
                 <section class="help-section">
@@ -854,6 +859,15 @@ hush()</code></pre>
         </div>
     </div>
 
+    <!-- Psychedelic Visuals Popup -->
+    <div id="psychedelicPopup" class="psychedelic-popup" style="display: none;">
+        <div class="psychedelic-popup-header">
+            <h3>Psychedelic Visuals 🌀</h3>
+            <button id="psychedelicCloseBtn" class="btn-close">✕</button>
+        </div>
+        <canvas id="psychedelicCanvasPopup" width="1000" height="800"></canvas>
+    </div>
+
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
@@ -871,6 +885,8 @@ hush()</code></pre>
     <script src="audio/scheduler.js"></script>
     <script src="editor/evaluator.js"></script>
     <script src="ui/visualizer.js"></script>
+    <script src="ui/psychedelic.js"></script>
+    <script src="ui/popup.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
