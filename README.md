@@ -1,4 +1,4 @@
-# ALGORAVE - Live Coding Music
+# ALGORAVE - Live Coding Music for Fun and Learning
 
 A web-based live coding environment for making electronic music in real-time using code patterns and transformations.
 
@@ -53,11 +53,12 @@ hush()
 ### Basic Patterns
 
 ```javascript
-// Sound patterns (drums/samples) - use with d1(), d2(), etc.
-d1(s("bd sd hh sd"))              // bass drum, snare, hi-hat, snare
+// s() automatically detects samples or notes!
+d1(s("bd sd hh sd"))              // Detects as samples (drums)
+d2(s("c3 e3 g3 bb3"))             // Detects as notes (melody)
 
-// Note patterns (melodies)
-d2(note("c3 e3 g3 bb3"))          // C minor 7th arpeggio
+// You can also use note() as alias:
+d2(note("c3 e3 g3 bb3"))          // Same as s("c3 e3 g3 bb3")
 ```
 
 ### Repetition
@@ -65,6 +66,7 @@ d2(note("c3 e3 g3 bb3"))          // C minor 7th arpeggio
 ```javascript
 d1(s("bd*4"))                     // bd repeated 4 times
 d2(s("hh*8"))                     // hh repeated 8 times
+d3(s("c3*4"))                     // Note repeated 4 times
 ```
 
 ### Rests/Silence
@@ -102,6 +104,8 @@ d7(s("bd sd").often(fast(2)))      // 75% chance
 
 ## Effects
 
+### Pattern Effects (per-slot)
+
 ```javascript
 // Volume/Gain (0-1, default 0.5)
 d1(s("bd sd").gain(0.8))           // Louder
@@ -125,6 +129,69 @@ d7(s("hh*8").pan(0.8))
 // Combine multiple effects
 d8(s("bd sd").gain(0.7).room(0.4).delay(0.2))
 ```
+
+### 🎚️ Master Effects (Global - NEW!)
+
+Master effects apply to **ALL audio** (all slots at once). Perfect for live transitions!
+
+```javascript
+// Low-pass filter (atténue les aigus)
+masterLPF(800)    // Filtre à 800Hz (son plus sombre)
+masterLPF(20000)  // Transparent (20kHz) - default
+
+// High-pass filter (coupe les basses/kicks)
+masterHPF(100)    // Coupe un peu les basses
+masterHPF(200)    // Coupe beaucoup (plus de kick!)
+masterHPF(20)     // Transparent (20Hz) - default
+
+// Reverb globale
+masterReverb(0.5) // 50% de reverb
+masterReverb(0)   // Son sec (dry) - default
+
+// Delay global
+masterDelay(0.3)  // 30% de delay
+masterDelay(0)    // Pas de delay - default
+
+// Volume master
+masterVolume(0.8) // 80% - default
+masterVolume(1.0) // 100% (full power!)
+
+// Compressor (contrôle la dynamique)
+masterCompressor(-20, 4)  // Threshold: -20dB, Ratio: 4:1 - default
+masterCompressor(-15, 6)  // Plus de compression
+
+// Reset tous les effets master
+masterReset()
+```
+
+#### Master Effects Examples
+
+```javascript
+// Psytrance filter sweep (transition classique)
+d1(s("bd*4"))
+d2(note("c1 c1 d1 eb1").s("fm"))
+d3(s("hh*16"))
+// ... puis sweep:
+masterLPF(800)   // Atténue les aigus
+masterLPF(500)   // Plus sombre
+masterLPF(300)   // Très sombre
+masterLPF(20000) // Drop! Retour normal
+
+// Breakdown atmosphérique
+masterReverb(0.6)  // Beaucoup de reverb
+masterDelay(0.4)   // Delay spacieux
+masterHPF(150)     // Coupe les basses
+// ... puis reset pour le drop:
+masterReset()      // Retour au son sec et puissant!
+
+// Build-up avec volume
+masterVolume(0.3)  // Commence faible
+masterVolume(0.5)  // Monte progressivement
+masterVolume(0.7)  // Monte encore
+masterVolume(1.0)  // Drop à full power!
+```
+
+**Interface UI** : Utilisez les sliders dans le panneau "Master Effects" pour contrôler en temps réel!
 
 ## Synthesizers
 
@@ -210,9 +277,70 @@ d2(silence())
 
 ## Keyboard Shortcuts
 
-- **Ctrl+Enter** (or Cmd+Enter) - Evaluate current line or selection
-- **Ctrl+Shift+Enter** - Evaluate selected lines (or all if nothing selected)
-- **Ctrl+.** - Stop current slot only (extracts slot from line, e.g., d1, d2, etc.)
+- **Ctrl+Enter** (or Cmd+Enter) - Smart evaluation: evaluates selected lines if any, otherwise current line
+- **Ctrl+.** - Stop selected lines/slots (stops all slots found in selected lines)
+- **Ctrl+Space** - Autocomplete: shows all available commands
+
+## 🎵 Custom Samples (NEW!)
+
+You can now **load your own audio samples** into AlgoRave!
+
+### Quick Setup
+
+1. Place your audio files in the `samples/` folder:
+
+   ```text
+   samples/
+     ├── kicks/      - Kick drum samples (bd0.wav, bd1.wav, etc.)
+     ├── snares/     - Snare drum samples (sd0.wav, sd1.wav, etc.)
+     ├── hats/       - Hi-hat samples (hh0.wav, hh1.wav, etc.)
+     ├── percs/      - Percussion samples (cp0.wav, oh0.wav, etc.)
+     └── custom/     - Your custom samples (any name)
+   ```
+
+2. Use numbered naming for variations:
+
+   - `bd0.wav`, `bd1.wav`, `bd2.wav` ... (up to bd9)
+   - `sd0.wav`, `sd1.wav`, `sd2.wav` ... (up to sd9)
+   - `hh0.wav`, `hh1.wav`, `hh2.wav` ... (up to hh9)
+
+3. The system auto-loads samples on START
+
+### Supported Formats
+
+- WAV (recommended)
+- MP3 (compressed)
+- OGG (good quality/size)
+
+### Using Custom Samples
+
+```javascript
+// Check what samples are loaded
+samples()  // Shows info in console
+
+// Use numbered variations
+d1(s("bd0*4"))         // Uses bd0.wav if loaded
+d2(s("bd1 bd2 bd0 bd1")) // Mix different kicks
+
+// Numbered samples with patterns
+d3(s("hh0*8 hh1*8"))   // Alternate between two hi-hat samples
+
+// Custom samples from /custom folder
+d4(s("bass bass ~ bass"))  // Uses bass.wav if loaded
+```
+
+### Fallback to Synth
+
+If a sample file isn't found, AlgoRave automatically falls back to synthesized drums. This means you can use the same pattern whether samples are loaded or not!
+
+```javascript
+// This works with or without samples:
+d1(s("bd sd hh sd"))  // Uses samples if available, synth if not
+```
+
+**For more details, see `samples/README.md`**
+
+---
 
 ## Sound Library
 
@@ -251,9 +379,10 @@ d1(note("c3 e3 g3 c4"))  // C major arpeggio
   - pattern.js      // Pattern class with transformations
 
 /audio/
+  - master.js       // Master effects bus (NEW!)
   - synths.js       // Tone.js synthesizers
   - samples.js      // Sample management
-  - effects.js      // Audio effects
+  - effects.js      // Audio effects (per-pattern)
   - scheduler.js    // Pattern scheduler
 
 /editor/
@@ -263,10 +392,48 @@ d1(note("c3 e3 g3 c4"))  // C major arpeggio
   - visualizer.js   // Timeline & scope visualization
 ```
 
+### Audio Signal Flow
+
+```text
+Pattern Slots (d1-d9)
+    ↓
+Synths/Samples → Pattern Effects (gain, lpf, hpf, reverb, delay, pan)
+    ↓
+Master Bus → HPF → LPF → Compressor → Reverb → Delay → Gain → Limiter
+    ↓
+Speakers 🔊
+```
+
+## Audio Optimization
+
+### Latency Settings
+
+The app includes **3 latency modes** to optimize audio performance based on your system:
+
+1. **Low (Interactive)** - Minimal latency but may cause crackling on slower systems
+2. **Medium (Balanced)** - Good balance between latency and stability
+3. **High (Playback)** ★ **RECOMMENDED** - Maximum stability, slight latency increase
+
+**How to change:**
+1. Look for "Audio Settings" panel on the right
+2. Select your preferred latency mode
+3. Click STOP then START to apply
+
+### Audio Engine Configuration
+
+The app automatically optimizes several parameters:
+- **Latency Hint**: Configurable (interactive/balanced/playback)
+- **Transport lookAhead**: 0.2 seconds (schedules events ahead of time)
+- **Transport updateInterval**: 0.05 seconds (timing precision)
+- **Synth Polyphony**: Limited to 16 voices per synth to prevent memory saturation
+- **Node Cleanup**: Automatic disposal of audio nodes after playback
+
+These settings prevent the audio crackling/glitching issues that can occur during long sessions with many simultaneous patterns.
+
 ## Technologies
 
-- **[Tone.js](https://tonejs.github.io/)** - Web Audio framework
-- **[CodeMirror](https://codemirror.net/)** - Code editor
+- **[Tone.js v14](https://tonejs.github.io/)** - Web Audio framework
+- **[CodeMirror 5](https://codemirror.net/)** - Code editor
 - **Web Audio API** - Audio synthesis
 - **Canvas API** - Visualizations
 

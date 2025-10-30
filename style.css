@@ -1,4 +1,4 @@
-/* ===== ALGORAVE - Live Coding Music Style ===== */
+/* ===== ALGORAVE - Live Coding Music for Fun and Learning ===== */
 
 :root {
     --bg-dark: #1e1e1e;
@@ -422,7 +422,7 @@ body {
     animation: pulse 2s infinite;
 }
 
-/* ===== HELP BUTTON ===== */
+/* ===== HELP & EXAMPLES BUTTONS ===== */
 
 .btn-help {
     border-color: var(--accent-cyan);
@@ -431,6 +431,16 @@ body {
 
 .btn-help:hover {
     background: var(--accent-cyan);
+    color: var(--bg-dark);
+}
+
+.btn-examples {
+    border-color: #ff8800;  /* Orange pour se différencier du stop (pink) */
+    color: #ff8800;
+}
+
+.btn-examples:hover {
+    background: #ff8800;
     color: var(--bg-dark);
 }
 
@@ -613,6 +623,117 @@ body {
     line-height: 1.6;
 }
 
+/* ===== AUDIO SETTINGS ===== */
+
+.audio-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.audio-settings select {
+    flex: 1;
+    padding: 5px 8px;
+    background: var(--bg-darker);
+    border: 1px solid var(--border-color);
+    color: var(--accent-cyan);
+    font-family: inherit;
+    font-size: 0.85em;
+    cursor: pointer;
+}
+
+.audio-settings select:focus {
+    outline: none;
+    border-color: var(--accent-cyan);
+}
+
+/* ===== MASTER CONTROLS ===== */
+
+.master-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.control-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8em;
+}
+
+.control-row label {
+    min-width: 70px;
+    color: var(--accent-cyan);
+    font-weight: bold;
+}
+
+.control-row input[type="range"] {
+    flex: 1;
+    height: 4px;
+    background: var(--bg-darker);
+    border-radius: 2px;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.control-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--accent-green);
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.control-row input[type="range"]::-webkit-slider-thumb:hover {
+    background: var(--accent-cyan);
+    transform: scale(1.2);
+}
+
+.control-row input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: var(--accent-green);
+    cursor: pointer;
+    border-radius: 50%;
+    border: none;
+    transition: all 0.2s;
+}
+
+.control-row input[type="range"]::-moz-range-thumb:hover {
+    background: var(--accent-cyan);
+    transform: scale(1.2);
+}
+
+.control-row span {
+    min-width: 60px;
+    text-align: right;
+    color: var(--text-primary);
+    font-family: 'Courier New', monospace;
+}
+
+.btn-master-reset {
+    padding: 8px 12px;
+    font-size: 0.75em;
+    background: transparent;
+    border: 1px solid var(--accent-pink);
+    color: var(--accent-pink);
+    cursor: pointer;
+    font-family: inherit;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    margin-top: 5px;
+}
+
+.btn-master-reset:hover {
+    background: var(--accent-pink);
+    color: var(--bg-dark);
+}
+
 /* Modal responsive */
 @media (max-width: 768px) {
     .modal-content {
@@ -631,5 +752,45 @@ body {
     .samples-grid,
     .code-examples {
         grid-template-columns: 1fr;
+    }
+}
+
+/* ===== METRONOME LED ===== */
+
+.metronome-led {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #444;
+    border: 1px solid #666;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.metronome-led.pulse {
+    animation: metronomePulse 1.8s ease-out forwards;
+    background: var(--accent-green);
+    box-shadow: 0 0 8px var(--accent-green), inset 0 1px 2px rgba(0, 255, 136, 0.3);
+}
+
+@keyframes metronomePulse {
+    0% {
+        background: var(--accent-green);
+        box-shadow: 0 0 16px var(--accent-green), inset 0 1px 2px rgba(0, 255, 136, 0.8);
+        transform: scale(1.3);
+    }
+    5% {
+        background: var(--accent-green);
+        box-shadow: 0 0 12px var(--accent-green), inset 0 1px 2px rgba(0, 255, 136, 0.6);
+        transform: scale(1.1);
+    }
+    15% {
+        background: rgba(0, 255, 136, 0.6);
+        box-shadow: 0 0 6px var(--accent-green);
+        transform: scale(1);
+    }
+    100% {
+        background: #444;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+        transform: scale(1);
     }
 }

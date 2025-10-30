@@ -10,6 +10,7 @@ class PatternScheduler {
         this.bpm = 135;
         this.isPlaying = false;
         this.initialized = false;
+        this.metronomeInterval = null; // Timer pour le métronome
     }
 
     /**
@@ -27,13 +28,14 @@ class PatternScheduler {
         Tone.Transport.bpm.value = this.bpm;
         Tone.Transport.timeSignature = 4;
 
-        // Schedule pattern playback
-        Tone.Transport.scheduleRepeat((time) => {
-            this.scheduleCycle(time);
-        }, '1m'); // Every measure (1 cycle)
+        // Transport still needed for synth note scheduling (for duration)
+        // but we're NOT using scheduleRepeat for cycles
+        // Patterns are now triggered immediately from independent metronome timer
 
         this.initialized = true;
         console.log('Scheduler initialized');
+        console.log('Transport lookAhead:', Tone.Transport.lookAhead);
+        console.log('Transport updateInterval:', Tone.Transport.updateInterval);
     }
 
     /**
@@ -44,6 +46,11 @@ class PatternScheduler {
 
         // Update parser cycle for alternation
         window.parser.currentCycle = this.currentCycle;
+        
+        // Log every 4 cycles (reduce spam)
+        if (this.currentCycle % 4 === 0) {
+            console.log(`Cycle ${this.currentCycle} at time ${time.toFixed(2)}s`);
+        }
 
         // Schedule each pattern
         this.patterns.forEach((pattern, id) => {
@@ -60,15 +67,45 @@ class PatternScheduler {
     }
 
     /**
+     * Pulse the metronome LED
+     */
+    pulseMetronome() {
+        try {
+            const led = document.getElementById('metronomeLed');
+            if (!led) {
+                return;
+            }
+
+            // Force animation restart by removing class, forcing reflow, then adding back
+            led.classList.remove('pulse');
+            
+            // Force browser reflow by reading offsetHeight
+            void led.offsetHeight;
+            
+            // Add class back immediately
+            led.classList.add('pulse');
+        } catch (e) {
+            // Silently ignore errors
+        }
+    }
+
+    /**
      * Schedule a single pattern's events
      */
     schedulePattern(pattern, time, cycleNumber) {
         const events = pattern.getEventsForCycle(cycleNumber);
         const gain = pattern.effects.gain || 1.0;
 
+        // Calculate exact timing for each event within the cycle
+        // At 135 BPM: 1 beat = 0.444s, so event.time (0-1) maps to 0-1.778s
+        const beatDuration = 60 / this.bpm; // seconds per beat
+        const cycleDuration = beatDuration * 4; // 4 beats per cycle
+
         events.forEach(event => {
-            const eventTime = time + (event.time * 4); // 4 beats per cycle
-            const duration = event.duration * 4; // in beats
+            // Calculate offset from cycle start in seconds
+            const offset = event.time * cycleDuration;
+            const eventTime = time + offset;
+            const duration = event.duration * cycleDuration; // in seconds
 
             if (pattern.type === 'sound') {
                 // Play sample/drum with gain
@@ -140,7 +177,29 @@ class PatternScheduler {
         this.isPlaying = true;
         this.currentCycle = 0;
 
+        // Start a reliable metronome timer (independent of Tone.Transport)
+        // At 135 BPM: 1 cycle/measure = 1.778 seconds
+        const cycleDurationMs = (60000 / this.bpm) * 4; // 4 beats per cycle
+        
+        let lastPulseTime = Date.now();
+        this.metronomeInterval = setInterval(() => {
+            if (this.isPlaying) {
+                const now = Date.now();
+                const actualInterval = now - lastPulseTime;
+                console.log(`⏱️ LED pulse (actual interval: ${actualInterval}ms, expected: ${cycleDurationMs.toFixed(0)}ms)`);
+                lastPulseTime = now;
+                
+                // Pulse LED IMMEDIATELY when timer fires (perfect sync)
+                this.pulseMetronome();
+                
+                // Trigger patterns with tiny offset (0.05s) for audio system to process
+                const toneNow = Tone.now();
+                this.scheduleCycle(toneNow + 0.05); // Small 50ms buffer for audio processing
+            }
+        }, cycleDurationMs);
+
         console.log('Playback started');
+        console.log(`Metronome interval: ${cycleDurationMs.toFixed(0)}ms at ${this.bpm} BPM`);
     }
 
     /**
@@ -153,6 +212,12 @@ class PatternScheduler {
         this.isPlaying = false;
         this.currentCycle = 0;
 
+        // Stop the metronome timer
+        if (this.metronomeInterval) {
+            clearInterval(this.metronomeInterval);
+            this.metronomeInterval = null;
+        }
+
         console.log('Playback stopped');
     }
 
@@ -162,6 +227,19 @@ class PatternScheduler {
     setBPM(bpm) {
         this.bpm = Math.max(60, Math.min(200, bpm));
         Tone.Transport.bpm.value = this.bpm;
+        
+        // If playing, restart the metronome interval with new BPM
+        if (this.isPlaying && this.metronomeInterval) {
+            clearInterval(this.metronomeInterval);
+            
+            const cycleDurationMs = (60000 / this.bpm) * 4; // 4 beats per cycle
+            this.metronomeInterval = setInterval(() => {
+                if (this.isPlaying) {
+                    this.pulseMetronome();
+                }
+            }, cycleDurationMs);
+        }
+        
         console.log(`BPM set to ${this.bpm}`);
     }
 

@@ -15,31 +15,34 @@ class EffectsEngine {
     init() {
         if (this.initialized) return;
 
+        // Note: These effects are for individual patterns
+        // Master effects are in masterBus
+
         // Create effect instances
         this.effects.reverb = new Tone.Reverb({
             decay: 2.5,
             wet: 0
-        }).toDestination();
+        }).connect(window.masterBus.getInput());
 
         this.effects.delay = new Tone.FeedbackDelay({
             delayTime: '8n',
             feedback: 0.3,
             wet: 0
-        }).toDestination();
+        }).connect(window.masterBus.getInput());
 
         this.effects.lpf = new Tone.Filter({
             type: 'lowpass',
             frequency: 20000,
             rolloff: -24
-        }).toDestination();
+        }).connect(window.masterBus.getInput());
 
         this.effects.hpf = new Tone.Filter({
             type: 'highpass',
             frequency: 20,
             rolloff: -24
-        }).toDestination();
+        }).connect(window.masterBus.getInput());
 
-        this.effects.panner = new Tone.Panner(0).toDestination();
+        this.effects.panner = new Tone.Panner(0).connect(window.masterBus.getInput());
 
         this.initialized = true;
     }

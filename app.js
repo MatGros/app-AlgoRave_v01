@@ -1,6 +1,6 @@
 /**
  * ALGORAVE - Main Application
- * Integrates all components for live coding music
+ * Live coding music for fun and learning
  */
 
 // Suppress expected browser warnings about AudioContext (normal behavior)
@@ -22,71 +22,85 @@ class AlgoRaveApp {
         this.editor = null;
         this.isInitialized = false;
         this.STORAGE_KEY = 'algorave_code';
-        this.DEFAULT_CODE = `// PSYTRANCE SET - 135 BPM 🎵
+        this.DEFAULT_CODE = `// PSYTRANCE SET - 140 BPM 🎵
 // 1. Click START first!
 // 2. Press Ctrl+Enter on each line to build the track
 // 3. Modify and re-evaluate to change patterns live!
 
 // ====== BASIC PSYTRANCE PATTERN ======
 
-// Slot 1: Kick 4-on-the-floor (foundation)
-d1(s("bd*4"))
+// Slot 1: Powerful kick 4-on-the-floor (foundation)
+d1(s("bd*4").gain(0.9))
 
-// Slot 2: Rolling bassline (psychedelic)
-d2(note("c1 c1 d1 c1 c1 eb1 c1 c1").s("fm").lpf(600))
+// Slot 2: Aggressive rolling bassline (16th notes)
+d2(note("c1 c1 d1 eb1 c1 d1 f1 eb1 c1 d1 eb1 f1 g1 f1 eb1 d1").s("sawtooth").lpf(650).gain(0.7))
 
 // Slot 3: Fast hi-hats (psytrance signature)
-d3(s("hh*16").pan(0.6))
+d3(s("hh*16").gain(0.35).pan(0.6))
 
-// Slot 4: Off-beat percussion
-d4(s("~ cp ~ cp ~ oh ~ cp"))
+// Slot 4: Off-beat claps and open hats
+d4(s("~ cp ~ oh ~ cp ~ oh").gain(0.55))
 
 // ====== ADVANCED PATTERNS ======
 
-// More complex bassline (rolling 16ths)
-d2(note("c1 ~ c1 d1 ~ eb1 ~ d1 c1 ~ c1 d1 ~ f1 ~ eb1").s("fm").lpf(800).room(0.2))
+// Heavy acid bassline (more aggressive)
+d2(note("c1 c1 d1 eb1 c1 d1 f1 eb1 c1 d1 eb1 f1 g1 f1 eb1 d1").s("square").lpf(700).gain(0.75).room(0.1))
 
-// Psychedelic FM lead
-d5(note("c3 eb3 g3 bb3 c4 g3 eb3 c3").s("fm").room(0.4).delay(0.3).pan(0.3))
+// Psychedelic lead with punch
+d5(note("c4 eb4 g4 bb4 c5 bb4 g4 eb4").s("sawtooth").gain(0.5).room(0.5).delay(0.25).pan(0.3))
 
-// Add snare on 2 and 4
-d6(s("~ ~ sd ~ ~ ~ sd ~"))
+// Add powerful snare on 2 and 4
+d6(s("~ ~ sd ~ ~ ~ sd ~").gain(0.7))
 
 // Trippy hi-hat variations
-d3(s("hh*16").every(4, fast(2)))
+d3(s("hh*16").gain(0.35).every(4, fast(2)).pan(0.65))
 
 // ====== BREAKDOWN PATTERNS ======
 
-// Minimal (just kick + bass)
-d1(s("bd*4"))
-d2(note("c1 ~ ~ ~ c1 ~ ~ ~").s("fm").lpf(400))
+// Minimal (just kick + deep bass)
+d1(s("bd*4").gain(0.85))
+d2(note("c1 ~ ~ ~ eb1 ~ ~ ~").s("sine").lpf(400).gain(0.6))
 d3(silence())
 d4(silence())
+d5(silence())
+d6(silence())
 
 // Build up tension
-d3(s("hh*8").fast(2))
-d5(note("c3 c3 c3 c3").s("sine").room(0.6))
+d3(s("hh*8").gain(0.3).fast(2))
+d5(note("c3 eb3 g3 bb3").s("triangle").gain(0.4).room(0.7).slow(2))
 
 // ====== FULL POWER ======
 
-// Stack everything!
-d1(s("bd*4"))
-d2(note("c1 c1 d1 eb1 c1 c1 f1 eb1 c1 d1 c1 eb1 d1 c1 eb1 f1").s("fm").lpf(700))
-d3(s("hh*16").pan(0.7))
-d4(s("~ cp ~ oh ~ cp ~ oh"))
-d5(note("c4 eb4 g4 bb4").s("fm").room(0.5).delay(0.25))
-d6(s("~ ~ sd ~ ~ ~ sd ~"))
+// Stack everything with PUNCH!
+d1(s("bd*4").gain(0.95))
+d2(note("c1 c1 d1 eb1 c1 d1 f1 eb1 c1 d1 eb1 f1 g1 f1 eb1 d1").s("square").lpf(700).gain(0.8).room(0.1))
+d3(s("hh*16").gain(0.35).pan(0.65))
+d4(s("~ cp ~ oh ~ cp ~ oh").gain(0.6))
+d5(note("c4 eb4 g4 bb4 c5 bb4 g4 eb4").s("sawtooth").gain(0.5).room(0.5).delay(0.25).pan(0.3))
+d6(s("~ ~ sd ~ ~ ~ sd ~").gain(0.75).room(0.3))
 
 // ====== VARIATIONS ======
 
-// Reverse bassline every 4 cycles
-d2(note("c1 c1 d1 eb1 f1 eb1 d1 c1").s("fm").every(4, rev()).lpf(600))
+// Reverse bassline every 4 cycles (trippy!)
+d2(note("c1 c1 d1 eb1 f1 g1 f1 eb1").s("square").every(4, rev()).lpf(650).gain(0.8))
 
-// Alternate kick pattern
-d1(s("<bd*4 bd*8>"))
+// Alternate kick pattern (more energy)
+d1(s("<bd*4 bd*8>").gain(0.95))
 
-// Crazy hi-hats
-d3(s("hh*16").sometimes(fast(2)).pan(0.5))
+// Crazy hi-hats with variations
+d3(s("hh*16").sometimes(fast(2)).gain(0.35).pan(0.6))
+
+// ====== MASTER EFFECTS - LIVE TRANSITIONS ======
+
+// Filter sweep (psytrance classic!)
+masterLPF(800)   // Darker sound
+masterLPF(500)   // Even darker
+masterLPF(20000) // DROP! Full spectrum
+
+// Build with master volume
+masterVolume(0.5)  // Quieter
+masterVolume(0.8)  // Normal
+masterVolume(1.0)  // FULL POWER!
 
 // ====== STOP CONTROLS ======
 
@@ -95,7 +109,10 @@ hush()
 
 // Stop specific slots
 d5(silence())
-d6(silence())`;
+d6(silence())
+
+// Reset master effects
+masterReset()`;
     }
 
     /**
@@ -115,6 +132,14 @@ d6(silence())`;
 
         // Setup UI update functions
         this.setupUIUpdates();
+
+        // Setup audio info display
+        this.setupAudioInfo();
+
+        // Initialize sample library (async - loads custom samples)
+        if (window.sampleLibrary) {
+            await window.sampleLibrary.init();
+        }
 
         this.isInitialized = true;
         this.log('AlgoRave initialized', 'success');
@@ -153,19 +178,12 @@ d6(silence())`;
         // Set up keyboard shortcuts
         this.editor.setOption('extraKeys', {
             'Ctrl-Enter': (cm) => {
-                this.evaluateCurrentLine();
+                // Smart: evaluate selection if exists, otherwise current line
+                this.evaluateSmartly();
                 return true;
             },
             'Cmd-Enter': (cm) => {
-                this.evaluateCurrentLine();
-                return true;
-            },
-            'Ctrl-Shift-Enter': (cm) => {
-                this.evaluateSelection();
-                return true;
-            },
-            'Cmd-Shift-Enter': (cm) => {
-                this.evaluateSelection();
+                this.evaluateSmartly();
                 return true;
             },
             'Ctrl-.': (cm) => {
@@ -184,10 +202,6 @@ d6(silence())`;
         
         // Additional global keyboard handler
         document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Enter') {
-                e.preventDefault();
-                this.evaluateSelection();
-            }
             if ((e.ctrlKey || e.metaKey) && e.key === '.') {
                 e.preventDefault();
                 this.stopCurrentSlot();
@@ -208,10 +222,10 @@ d6(silence())`;
     setupAutocomplete() {
         // Define all available commands and functions
         this.autocompleteHints = {
-            // Pattern creation
-            's': { text: 's("bd sd")', displayText: 's() - Sound/Sample pattern', hint: 's' },
-            'note': { text: 'note("c3 e3 g3")', displayText: 'note() - Note pattern', hint: 'note' },
-            'stack': { text: 'stack(\n  s("bd*4"),\n  note("c2")\n)', displayText: 'stack() - Stack multiple patterns', hint: 'stack' },
+            // Pattern creation (auto-detects samples vs notes!)
+            's': { text: 's("bd")', displayText: 's() - Auto-detect pattern (samples or notes)', hint: 's' },
+            'note': { text: 'note("c3")', displayText: 'note() - Alias for s() (auto-detects)', hint: 'note' },
+            'stack': { text: 'stack(\n  s("bd*4"),\n  s("c2")\n)', displayText: 'stack() - Stack multiple patterns', hint: 'stack' },
 
             // Pattern slots
             'd1': { text: 'd1(s(""))', displayText: 'd1 - Pattern slot 1', hint: 'd1' },
@@ -258,7 +272,19 @@ d6(silence())`;
             'sd': { text: 's("sd")', displayText: '"sd"/"snare" - Snare drum', hint: 'sd' },
             'hh': { text: 's("hh")', displayText: '"hh"/"hihat" - Hi-hat', hint: 'hh' },
             'oh': { text: 's("oh")', displayText: '"oh"/"openhh" - Open hi-hat', hint: 'oh' },
-            'cp': { text: 's("cp")', displayText: '"cp"/"clap" - Clap', hint: 'cp' }
+            'cp': { text: 's("cp")', displayText: '"cp"/"clap" - Clap', hint: 'cp' },
+
+            // Master effects
+            'masterLPF': { text: 'masterLPF(800)', displayText: 'masterLPF(hz) - Master low-pass filter', hint: 'masterLPF' },
+            'masterHPF': { text: 'masterHPF(100)', displayText: 'masterHPF(hz) - Master high-pass filter (cut kicks)', hint: 'masterHPF' },
+            'masterReverb': { text: 'masterReverb(0.5)', displayText: 'masterReverb(0-1) - Master reverb', hint: 'masterReverb' },
+            'masterDelay': { text: 'masterDelay(0.3)', displayText: 'masterDelay(0-1) - Master delay', hint: 'masterDelay' },
+            'masterVolume': { text: 'masterVolume(0.8)', displayText: 'masterVolume(0-2) - Master volume', hint: 'masterVolume' },
+            'masterCompressor': { text: 'masterCompressor(-20, 4)', displayText: 'masterCompressor(threshold, ratio) - Master compressor', hint: 'masterCompressor' },
+            'masterReset': { text: 'masterReset()', displayText: 'masterReset() - Reset all master effects', hint: 'masterReset' },
+
+            // Sample library
+            'samples': { text: 'samples()', displayText: 'samples() - Show loaded samples info', hint: 'samples' }
         };
     }
 
@@ -326,6 +352,12 @@ d6(silence())`;
             }
         });
 
+        // Master Effects Controls
+        this.setupMasterControls();
+
+        // Audio Info Display
+        this.setupAudioInfo();
+
         // Clear console
         document.getElementById('clearConsole').addEventListener('click', () => {
             this.clearConsole();
@@ -353,10 +385,28 @@ d6(silence())`;
             }
         });
 
+        // Examples button
+        document.getElementById('examplesBtn').addEventListener('click', () => {
+            this.showExamples();
+        });
+
+        // Close examples modal
+        document.getElementById('closeExamplesBtn').addEventListener('click', () => {
+            this.hideExamples();
+        });
+
+        // Close examples modal when clicking outside
+        document.getElementById('examplesModal').addEventListener('click', (e) => {
+            if (e.target.id === 'examplesModal') {
+                this.hideExamples();
+            }
+        });
+
         // Close modal with Escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.hideHelp();
+                this.hideExamples();
             }
         });
     }
@@ -390,19 +440,24 @@ d6(silence())`;
     }
 
     /**
-     * Evaluate current line or selection
+     * Evaluate smartly: selection if exists, otherwise current line
+     */
+    evaluateSmartly() {
+        // If there's a selection, evaluate selected lines
+        if (this.editor.somethingSelected()) {
+            this.evaluateSelection();
+        } else {
+            // Otherwise evaluate current line
+            this.evaluateCurrentLine();
+        }
+    }
+
+    /**
+     * Evaluate current line
      */
     evaluateCurrentLine() {
         const cursor = this.editor.getCursor();
-        let code;
-
-        // Check if there's a selection
-        if (this.editor.somethingSelected()) {
-            code = this.editor.getSelection();
-        } else {
-            // Get current line
-            code = this.editor.getLine(cursor.line);
-        }
+        const code = this.editor.getLine(cursor.line);
 
         if (!code.trim()) return;
 
@@ -568,6 +623,12 @@ d6(silence())`;
         document.getElementById('statusText').textContent = 'playing';
         document.querySelector('.status').classList.add('running');
 
+        // Update BPM display after start
+        const tempoSpan = document.getElementById('metronomeTempo');
+        if (tempoSpan && window.scheduler) {
+            tempoSpan.textContent = `${window.scheduler.bpm} BPM`;
+        }
+
         this.log('▶ Playback started', 'success');
     }
 
@@ -668,6 +729,197 @@ d6(silence())`;
     hideHelp() {
         const modal = document.getElementById('helpModal');
         modal.classList.remove('show');
+    }
+
+    /**
+     * Show examples modal
+     */
+    showExamples() {
+        const modal = document.getElementById('examplesModal');
+        modal.classList.add('show');
+        this.log('Examples opened', 'info');
+    }
+
+    /**
+     * Hide examples modal
+     */
+    hideExamples() {
+        const modal = document.getElementById('examplesModal');
+        modal.classList.remove('show');
+    }
+
+    /**
+     * Setup master effects controls
+     */
+    setupMasterControls() {
+        // Store slider references
+        const lpfSlider = document.getElementById('masterLPF');
+        const lpfValue = document.getElementById('masterLPFValue');
+        const hpfSlider = document.getElementById('masterHPF');
+        const hpfValue = document.getElementById('masterHPFValue');
+        const reverbSlider = document.getElementById('masterReverb');
+        const reverbValue = document.getElementById('masterReverbValue');
+        const delaySlider = document.getElementById('masterDelay');
+        const delayValue = document.getElementById('masterDelayValue');
+        const volumeSlider = document.getElementById('masterVolume');
+        const volumeValue = document.getElementById('masterVolumeValue');
+
+        // Flag to prevent feedback loops
+        let isUpdatingFromCode = false;
+
+        // Register UI update callback with masterBus (safe check)
+        if (window.masterBus && typeof window.masterBus.setUIUpdateCallback === 'function') {
+            window.masterBus.setUIUpdateCallback((param, value) => {
+                isUpdatingFromCode = true;
+
+                try {
+                    switch(param) {
+                        case 'lpf':
+                            lpfSlider.value = value;
+                            lpfValue.textContent = value >= 1000 ? `${(value / 1000).toFixed(1)}kHz` : `${value}Hz`;
+                            break;
+                        case 'hpf':
+                            hpfSlider.value = value;
+                            hpfValue.textContent = `${value}Hz`;
+                            break;
+                        case 'reverb':
+                            reverbSlider.value = Math.round(value * 100);
+                            reverbValue.textContent = `${Math.round(value * 100)}%`;
+                            break;
+                        case 'delay':
+                            delaySlider.value = Math.round(value * 100);
+                            delayValue.textContent = `${Math.round(value * 100)}%`;
+                            break;
+                        case 'volume':
+                            volumeSlider.value = Math.round(value * 100);
+                            volumeValue.textContent = `${Math.round(value * 100)}%`;
+                            break;
+                    }
+                } catch (e) {
+                    console.error('Error updating UI:', e);
+                }
+
+                setTimeout(() => { isUpdatingFromCode = false; }, 50);
+            });
+        }
+
+        // LPF slider
+        lpfSlider.addEventListener('input', (e) => {
+            if (isUpdatingFromCode) return;
+            const freq = parseInt(e.target.value);
+            window.masterBus.setLPF(freq);
+            lpfValue.textContent = freq >= 1000 ? `${(freq / 1000).toFixed(1)}kHz` : `${freq}Hz`;
+        });
+
+        // HPF slider
+        hpfSlider.addEventListener('input', (e) => {
+            if (isUpdatingFromCode) return;
+            const freq = parseInt(e.target.value);
+            window.masterBus.setHPF(freq);
+            hpfValue.textContent = `${freq}Hz`;
+        });
+
+        // Reverb slider
+        reverbSlider.addEventListener('input', (e) => {
+            if (isUpdatingFromCode) return;
+            const amount = parseInt(e.target.value) / 100;
+            window.masterBus.setReverb(amount);
+            reverbValue.textContent = `${e.target.value}%`;
+        });
+
+        // Delay slider
+        delaySlider.addEventListener('input', (e) => {
+            if (isUpdatingFromCode) return;
+            const amount = parseInt(e.target.value) / 100;
+            window.masterBus.setDelay(amount);
+            delayValue.textContent = `${e.target.value}%`;
+        });
+
+        // Volume slider
+        volumeSlider.addEventListener('input', (e) => {
+            if (isUpdatingFromCode) return;
+            const volume = parseInt(e.target.value) / 100;
+            window.masterBus.setVolume(volume);
+            volumeValue.textContent = `${e.target.value}%`;
+        });
+
+        // Reset button
+        document.getElementById('masterResetBtn').addEventListener('click', () => {
+            window.masterBus.reset();
+
+            // Reset UI sliders (will trigger UI update via callback)
+            this.log('Master effects reset', 'info');
+        });
+    }
+
+    /**
+     * Setup audio info display
+     */
+    setupAudioInfo() {
+        // Function to update BPM display
+        const updateTempoDisplay = () => {
+            const tempoSpan = document.getElementById('metronomeTempo');
+            if (tempoSpan && window.scheduler && window.scheduler.bpm) {
+                tempoSpan.textContent = `${window.scheduler.bpm} BPM`;
+            }
+        };
+
+        // Update immediately if scheduler ready
+        if (window.scheduler && window.scheduler.bpm) {
+            updateTempoDisplay();
+        }
+        
+        // Also try after a short delay (in case scheduler initializes late)
+        setTimeout(() => {
+            updateTempoDisplay();
+        }, 100);
+
+        // Update audio info when audio starts
+        const updateAudioInfo = () => {
+            try {
+                const stateSpan = document.getElementById('audioContextState');
+                const sampleRateSpan = document.getElementById('audioSampleRate');
+                const latencySpan = document.getElementById('audioLatency');
+
+                if (Tone.context) {
+                    stateSpan.textContent = Tone.context.state;
+                    sampleRateSpan.textContent = `${Tone.context.sampleRate}Hz`;
+
+                    // Calculate real latency: baseLatency + output buffer
+                    const baseLatency = Tone.context.baseLatency || 0;
+                    const bufferSize = Tone.context.bufferSize || 256;
+                    const sampleRate = Tone.context.sampleRate || 48000;
+                    const bufferLatency = (bufferSize / sampleRate) * 1000; // Convert to ms
+                    const totalLatency = (baseLatency * 1000) + bufferLatency;
+                    
+                    latencySpan.textContent = totalLatency.toFixed(1);
+                }
+
+                // Update tempo display
+                updateTempoDisplay();
+            } catch (e) {
+                console.warn('Could not update audio info:', e);
+            }
+        };
+
+        // Update on start
+        const originalStart = this.start.bind(this);
+        this.start = async function() {
+            await originalStart();
+            setTimeout(updateAudioInfo, 100);
+        };
+
+        // Update tempo display when BPM changes
+        const bpmInput = document.getElementById('bpmInput');
+        if (bpmInput) {
+            bpmInput.addEventListener('change', (e) => {
+                const newBPM = parseInt(e.target.value);
+                if (window.scheduler) {
+                    window.scheduler.setBPM(newBPM);
+                    updateTempoDisplay();
+                }
+            });
+        }
     }
 }
 

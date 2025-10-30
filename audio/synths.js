@@ -17,17 +17,31 @@ class SynthEngine {
         if (this.initialized) return;
 
         // Start audio context (requires user interaction)
+        // Note: latencyHint is read-only after context is created
         await Tone.start();
         console.log('Audio context started');
+        console.log('Sample rate:', Tone.context.sampleRate);
+        console.log('Base latency:', Tone.context.baseLatency);
+        console.log('Latency hint:', Tone.context.latencyHint);
 
-        // Master output with limiter
-        this.masterGain = new Tone.Gain(0.7).toDestination();
+        // Initialize master bus first
+        if (!window.masterBus.initialized) {
+            await window.masterBus.init();
+        }
+
+        // Connect to master bus instead of destination
+        this.masterGain = new Tone.Gain(0.7);
         const limiter = new Tone.Limiter(-3).connect(this.masterGain);
+
+        // Route to master bus
+        this.masterGain.connect(window.masterBus.getInput());
 
         // Create synth pool for different types
         // Note: PolySynth in Tone.js v14 uses different syntax
+        // LIMITED to 16 voices max per synth to prevent memory issues
         this.synths = {
             sine: new Tone.PolySynth(Tone.Synth, {
+                maxPolyphony: 16,
                 options: {
                     oscillator: { type: 'sine' },
                     envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.5 }
@@ -35,6 +49,7 @@ class SynthEngine {
             }).connect(limiter),
 
             square: new Tone.PolySynth(Tone.Synth, {
+                maxPolyphony: 16,
                 options: {
                     oscillator: { type: 'square' },
                     envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.3 }
@@ -42,6 +57,7 @@ class SynthEngine {
             }).connect(limiter),
 
             sawtooth: new Tone.PolySynth(Tone.Synth, {
+                maxPolyphony: 16,
                 options: {
                     oscillator: { type: 'sawtooth' },
                     envelope: { attack: 0.01, decay: 0.15, sustain: 0.4, release: 0.5 }
@@ -49,6 +65,7 @@ class SynthEngine {
             }).connect(limiter),
 
             triangle: new Tone.PolySynth(Tone.Synth, {
+                maxPolyphony: 16,
                 options: {
                     oscillator: { type: 'triangle' },
                     envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.4 }
@@ -56,6 +73,7 @@ class SynthEngine {
             }).connect(limiter),
 
             fm: new Tone.PolySynth(Tone.FMSynth, {
+                maxPolyphony: 12,
                 options: {
                     harmonicity: 3,
                     modulationIndex: 10,
@@ -66,6 +84,7 @@ class SynthEngine {
             }).connect(limiter),
 
             am: new Tone.PolySynth(Tone.AMSynth, {
+                maxPolyphony: 12,
                 options: {
                     harmonicity: 2,
                     envelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 0.5 }
@@ -136,7 +155,7 @@ class SynthEngine {
      * Synthesized kick drum
      */
     playKick(time, gain = 1.0) {
-        const gainNode = new Tone.Gain(gain).toDestination();
+        const gainNode = new Tone.Gain(gain).connect(window.masterBus.getInput());
         const osc = new Tone.Oscillator(150, 'sine').connect(gainNode);
         const env = new Tone.AmplitudeEnvelope({
             attack: 0.001,
@@ -150,13 +169,24 @@ class SynthEngine {
         osc.frequency.setValueAtTime(150, time);
         osc.frequency.exponentialRampToValueAtTime(40, time + 0.1);
         env.triggerAttackRelease(0.5, time);
+
+        // Cleanup nodes after playback to prevent memory leak
+        setTimeout(() => {
+            try {
+                osc.dispose();
+                env.dispose();
+                gainNode.dispose();
+            } catch (e) {
+                // Silently ignore disposal errors
+            }
+        }, (time - Tone.now()) * 1000 + 1000);
     }
 
     /**
      * Synthesized snare drum
      */
     playSnare(time, gain = 1.0) {
-        const gainNode = new Tone.Gain(gain).toDestination();
+        const gainNode = new Tone.Gain(gain).connect(window.masterBus.getInput());
 
         // Noise component
         const noise = new Tone.Noise('white');
@@ -186,13 +216,27 @@ class SynthEngine {
 
         osc.start(time).stop(time + 0.15);
         oscEnv.triggerAttackRelease(0.1, time);
+
+        // Cleanup nodes after playback
+        setTimeout(() => {
+            try {
+                noise.dispose();
+                noiseFilter.dispose();
+                noiseEnv.dispose();
+                osc.dispose();
+                oscEnv.dispose();
+                gainNode.dispose();
+            } catch (e) {
+                // Silently ignore disposal errors
+            }
+        }, (time - Tone.now()) * 1000 + 500);
     }
 
     /**
      * Synthesized hi-hat
      */
     playHihat(time, gain = 1.0) {
-        const gainNode = new Tone.Gain(gain).toDestination();
+        const gainNode = new Tone.Gain(gain).connect(window.masterBus.getInput());
         const noise = new Tone.Noise('white');
         const filter = new Tone.Filter(8000, 'highpass');
         const env = new Tone.AmplitudeEnvelope({
@@ -207,13 +251,25 @@ class SynthEngine {
 
         noise.start(time).stop(time + 0.1);
         env.triggerAttackRelease(0.05, time);
+
+        // Cleanup nodes after playback
+        setTimeout(() => {
+            try {
+                noise.dispose();
+                filter.dispose();
+                env.dispose();
+                gainNode.dispose();
+            } catch (e) {
+                // Silently ignore disposal errors
+            }
+        }, (time - Tone.now()) * 1000 + 200);
     }
 
     /**
      * Synthesized clap
      */
     playClap(time, gain = 1.0) {
-        const gainNode = new Tone.Gain(gain).toDestination();
+        const gainNode = new Tone.Gain(gain).connect(window.masterBus.getInput());
         const noise = new Tone.Noise('white');
         const filter = new Tone.Filter(2000, 'bandpass');
         const env = new Tone.AmplitudeEnvelope({
@@ -231,13 +287,25 @@ class SynthEngine {
         env.triggerAttackRelease(0.05, time);
         env.triggerAttackRelease(0.05, time + 0.02);
         env.triggerAttackRelease(0.1, time + 0.04);
+
+        // Cleanup nodes after playback
+        setTimeout(() => {
+            try {
+                noise.dispose();
+                filter.dispose();
+                env.dispose();
+                gainNode.dispose();
+            } catch (e) {
+                // Silently ignore disposal errors
+            }
+        }, (time - Tone.now()) * 1000 + 300);
     }
 
     /**
      * Synthesized open hi-hat
      */
     playOpenHH(time, gain = 1.0) {
-        const gainNode = new Tone.Gain(gain).toDestination();
+        const gainNode = new Tone.Gain(gain).connect(window.masterBus.getInput());
         const noise = new Tone.Noise('white');
         const filter = new Tone.Filter(7000, 'highpass');
         const env = new Tone.AmplitudeEnvelope({
@@ -252,6 +320,18 @@ class SynthEngine {
 
         noise.start(time).stop(time + 0.5);
         env.triggerAttackRelease(0.3, time);
+
+        // Cleanup nodes after playback
+        setTimeout(() => {
+            try {
+                noise.dispose();
+                filter.dispose();
+                env.dispose();
+                gainNode.dispose();
+            } catch (e) {
+                // Silently ignore disposal errors
+            }
+        }, (time - Tone.now()) * 1000 + 600);
     }
 
     /**

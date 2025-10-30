@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ALGORAVE - Live Coding Music</title>
+    <title>ALGORAVE - Live Coding Music for Fun and Learning</title>
 
     <!-- CodeMirror CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
@@ -18,7 +18,7 @@
         <header class="header">
             <div class="header-left">
                 <h1 class="logo">▶ ALGORAVE</h1>
-                <span class="tagline">live coding music</span>
+                <span class="tagline">live coding music for fun and learning</span>
             </div>
             <div class="header-right">
                 <div class="bpm-control">
@@ -30,6 +30,7 @@
                     <button id="stopBtn" class="btn btn-stop">STOP</button>
                 </div>
                 <button id="helpBtn" class="btn btn-help">HELP</button>
+                <button id="examplesBtn" class="btn btn-examples">EXAMPLES</button>
                 <div class="status">
                     <span id="statusText">ready</span>
                     <span id="cycleCount">cycle: 0</span>
@@ -41,7 +42,7 @@
         <main class="main-content">
             <div class="editor-container">
                 <div class="editor-toolbar">
-                    <span class="help-text">Ctrl+Enter: evaluate single line | Ctrl+Shift+Enter: evaluate selected lines | Ctrl+.: stop selected lines | Ctrl+Space: autocomplete</span>
+                    <span class="help-text">Ctrl+Enter: evaluate line or selection | Ctrl+.: stop selected lines | Ctrl+Space: autocomplete</span>
                     <button id="resetCodeBtn" class="btn-reset" title="Restore default code">Reset Code</button>
                 </div>
                 <textarea id="codeEditor">// PSYCHEDELIC PROGRESSIVE - 138 BPM ��🎵
@@ -171,6 +172,51 @@ d6(silence())
 
             <!-- Visualization Panel -->
             <aside class="viz-panel">
+                <div class="panel-section">
+                    <h3>Audio Info</h3>
+                    <div class="audio-info" style="font-size: 0.75em; color: #808080;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <div class="metronome-led" id="metronomeLed"></div>
+                            <span id="metronomeTempo">0 BPM</span>
+                        </div>
+                        <div>Context: <span id="audioContextState">-</span></div>
+                        <div>Sample Rate: <span id="audioSampleRate">-</span></div>
+                        <div>Latency: <span id="audioLatency">-</span>ms</div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Master Effects</h3>
+                    <div class="master-controls">
+                        <div class="control-row">
+                            <label>LPF (Hz)</label>
+                            <input type="range" id="masterLPF" min="200" max="20000" value="20000" step="100">
+                            <span id="masterLPFValue">20kHz</span>
+                        </div>
+                        <div class="control-row">
+                            <label>HPF (Hz)</label>
+                            <input type="range" id="masterHPF" min="20" max="500" value="20" step="10">
+                            <span id="masterHPFValue">20Hz</span>
+                        </div>
+                        <div class="control-row">
+                            <label>Reverb</label>
+                            <input type="range" id="masterReverb" min="0" max="100" value="0" step="1">
+                            <span id="masterReverbValue">0%</span>
+                        </div>
+                        <div class="control-row">
+                            <label>Delay</label>
+                            <input type="range" id="masterDelay" min="0" max="100" value="0" step="1">
+                            <span id="masterDelayValue">0%</span>
+                        </div>
+                        <div class="control-row">
+                            <label>Volume</label>
+                            <input type="range" id="masterVolume" min="0" max="200" value="80" step="5">
+                            <span id="masterVolumeValue">80%</span>
+                        </div>
+                        <button id="masterResetBtn" class="btn-master-reset">Reset Master</button>
+                    </div>
+                </div>
+
                 <div class="panel-section">
                     <h3>Pattern Timeline</h3>
                     <canvas id="timeline" width="450" height="200"></canvas>
@@ -335,60 +381,37 @@ d6(silence())
                 </section>
 
                 <section class="help-section">
-                    <h3>💡 Exemples Complets</h3>
-
-                    <div class="example-block">
-                        <h4>Techno Basique 135 BPM</h4>
-                        <pre><code>d1(s("bd*4"))
-d2(s("hh*8"))
-d3(s("~ sd ~ sd"))
-d4(note("c2 ~ eb2 ~").s("fm"))</code></pre>
-                    </div>
-
-                    <div class="example-block">
-                        <h4>Psytrance Psychédélique</h4>
-                        <pre><code>d1(s("bd*4"))
-d2(s("hh*16").fast(2))
-d3(note("c3 d3 eb3 g3").s("fm").room(0.5))
-d4(s("oh ~ oh ~").delay(0.3))</code></pre>
-                    </div>
-
-                    <div class="example-block">
-                        <h4>Drum & Bass 174 BPM</h4>
-                        <pre><code>d1(s("bd ~ sd bd ~ sd*2 bd ~"))
-d2(s("hh*8"))
-d3(note("c2 ~ c2 eb2").s("sawtooth").lpf(800))</code></pre>
-                    </div>
-
-                    <div class="example-block">
-                        <h4>Patterns Avancés</h4>
-                        <pre><code>// Stack multiple patterns
-d1(stack(
-  s("bd*4"),
-  s("hh*8"),
-  note("c2").s("fm")
-))
-
-// Transformations conditionnelles
-d2(s("bd sd hh cp").every(4, rev()))
-
-// Effets combinés
-d3(note("c3 eb3 g3").s("triangle")
-   .room(0.4).delay(0.2).pan(0.7))</code></pre>
-                    </div>
-
-                    <div class="example-block">
-                        <h4>Contrôle des Slots</h4>
-                        <pre><code>// Arrêter un slot spécifique
-d1(silence())
-
-// Arrêter tous les patterns
-hush()
-
-// Chaque slot est indépendant
-d1(s("bd*4"))  // Joue dans slot 1
-d2(s("hh*8"))  // Joue dans slot 2
-d1(s("bd sd")) // Remplace le pattern du slot 1</code></pre>
+                    <h3>🎚️ Master Effects (Global)</h3>
+                    <p>Ces effets s'appliquent à TOUT l'audio (tous les slots).</p>
+                    <div class="code-examples">
+                        <div class="example-item">
+                            <code>masterLPF(800)</code>
+                            <span>Filtre passe-bas (atténue aigus)</span>
+                        </div>
+                        <div class="example-item">
+                            <code>masterHPF(100)</code>
+                            <span>Filtre passe-haut (coupe kicks/basses)</span>
+                        </div>
+                        <div class="example-item">
+                            <code>masterReverb(0.5)</code>
+                            <span>Reverb globale (0-1)</span>
+                        </div>
+                        <div class="example-item">
+                            <code>masterDelay(0.3)</code>
+                            <span>Delay global (0-1)</span>
+                        </div>
+                        <div class="example-item">
+                            <code>masterVolume(0.8)</code>
+                            <span>Volume master (0-2)</span>
+                        </div>
+                        <div class="example-item">
+                            <code>masterCompressor(-20, 4)</code>
+                            <span>Compressor (threshold, ratio)</span>
+                        </div>
+                        <div class="example-item">
+                            <code>masterReset()</code>
+                            <span>Reset tous les effets master</span>
+                        </div>
                     </div>
                 </section>
 
@@ -397,11 +420,7 @@ d1(s("bd sd")) // Remplace le pattern du slot 1</code></pre>
                     <div class="code-examples">
                         <div class="example-item">
                             <code>Ctrl+Enter</code>
-                            <span>Évaluer la ligne courante</span>
-                        </div>
-                        <div class="example-item">
-                            <code>Ctrl+Shift+Enter</code>
-                            <span>Évaluer les lignes sélectionnées</span>
+                            <span>Évaluer la ligne courante OU les lignes sélectionnées</span>
                         </div>
                         <div class="example-item">
                             <code>Ctrl+.</code>
@@ -411,6 +430,424 @@ d1(s("bd sd")) // Remplace le pattern du slot 1</code></pre>
                             <code>Ctrl+Space</code>
                             <span>Autocomplétion (show all commands)</span>
                         </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- Examples Modal -->
+    <div id="examplesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎵 EXAMPLES - Electronic & Psychedelic Music</h2>
+                <button class="modal-close" id="closeExamplesBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <section class="help-section">
+                    <h3>🎧 Techno & House (120-135 BPM)</h3>
+
+                    <div class="example-block">
+                        <h4>Techno Minimal - Berlin Style</h4>
+                        <pre><code>// Deep techno kick avec reverb
+d1(s("bd*4").gain(0.8).room(0.2))
+
+// Hi-hats subtils (16ths)
+d2(s("hh*16").gain(0.25).pan(0.6))
+
+// Claps sur les temps 2 et 4
+d3(s("~ cp ~ cp").gain(0.5).room(0.4))
+
+// Bassline hypnotique
+d4(note("c2 ~ c2 ~ eb2 ~ c2 ~").s("sawtooth").lpf(500))</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Detroit Techno - Deep House</h4>
+                        <pre><code>// Powerful kick 4-on-the-floor
+d1(s("bd*4").gain(0.85))
+
+// Shaker pattern
+d2(s("hh*8 ~ hh*4").gain(0.3).pan(0.7))
+
+// Sub bass wobble
+d3(note("c1 c1 eb1 c1 f1 c1 eb1 c1").s("sine").lpf(300).gain(0.6))
+
+// Chord stabs (every 8 beats)
+d4(note("c3 eb3 g3").s("square").room(0.5).gain(0.4).slow(2))</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Acid House - TB-303 Style</h4>
+                        <pre><code>// Classic 909 kick
+d1(s("bd*4").gain(0.9))
+
+// Acid bassline avec filtre qui bouge
+d2(note("c2 ~ c2 d2 ~ eb2 ~ d2 c2 ~ d2 eb2 ~ f2 ~ eb2").s("sawtooth")
+   .lpf(800).room(0.1).gain(0.6))
+
+// Open hi-hat sur les off-beats
+d3(s("~ oh ~ oh").gain(0.4).room(0.3))
+
+// Claps avec delay
+d4(s("~ ~ cp ~").delay(0.25).gain(0.5))</code></pre>
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h3>🌀 Psytrance (135-145 BPM)</h3>
+
+                    <div class="example-block">
+                        <h4>Full-On Psytrance - Morning Vibes</h4>
+                        <pre><code>// Puissant kick psy (4-on-the-floor)
+d1(s("bd*4").gain(0.95))
+
+// Rolling bassline typique psy (16th notes) - AGGRESSIVE
+d2(note("c1 c1 d1 eb1 c1 d1 f1 eb1 c1 d1 eb1 f1 g1 f1 eb1 d1").s("square")
+   .lpf(700).gain(0.8).room(0.1))
+
+// Hi-hats ultra-rapides (signature psytrance)
+d3(s("hh*16").gain(0.35).pan(0.65).sometimes(fast(2)))
+
+// Lead psychédélique avec delay - PLUS PUISSANT
+d4(note("c4 eb4 g4 bb4 c5 bb4 g4 eb4").s("sawtooth")
+   .room(0.5).delay(0.25).gain(0.5).pan(0.3))
+
+// Off-beat claps et open hats
+d5(s("~ cp ~ oh ~ cp ~ oh").gain(0.6).room(0.3))</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Dark Psytrance - Night Time</h4>
+                        <pre><code>// Dark kick avec compression - PUISSANT
+d1(s("bd*4").gain(1.0))
+
+// Bassline sombre et lourde - AGGRESSIVE
+d2(note("c1 ~ c1 ~ d1 ~ c1 ~ eb1 ~ c1 ~ d1 ~ f1 ~").s("square")
+   .lpf(500).gain(0.85).room(0.05))
+
+// Metallic hi-hats
+d3(s("hh*16").gain(0.3).hpf(8000).pan(0.7))
+
+// Lead industriel et agressif - PLUS FORT
+d4(note("c3 ~ d3 ~ eb3 ~ f3 ~ g3 ~ f3 ~ eb3 ~ d3 ~").s("sawtooth")
+   .lpf(1200).room(0.4).gain(0.6))
+
+// Snare sur 2 et 4 - PUNCH
+d5(s("~ ~ sd ~ ~ ~ sd ~").gain(0.75).room(0.2))</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Progressive Psytrance - Groovy</h4>
+                        <pre><code>// Kick progressif - PUISSANT
+d1(s("bd*4").gain(0.95))
+
+// Bassline mélodique qui évolue - SAWTOOTH AGGRESSIVE
+d2(note("<c1 c1 d1 eb1 | d1 d1 eb1 f1>").s("sawtooth")
+   .lpf(700).gain(0.75).room(0.15))
+
+// Layers de hi-hats complexes
+d3(s("hh*16").every(4, fast(2)).gain(0.35).pan(0.6))
+
+// Atmosphère psychédélique - PLUS PRÉSENT
+d4(note("c3 eb3 g3 bb3").s("triangle")
+   .room(0.8).delay(0.3).gain(0.4).slow(2))
+
+// Percussions tribales
+d5(s("~ cp ~ ~ oh ~ cp ~").gain(0.6).pan(0.4))</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Psytrance Breakdown - Tension Builder</h4>
+                        <pre><code>// Kick minimal
+d1(s("bd*4").gain(0.7))
+
+// Bassline espacée (créer la tension)
+d2(note("c1 ~ ~ ~ ~ ~ ~ ~").s("fm").lpf(500).room(0.4).gain(0.5))
+
+// Pad atmosphérique qui monte
+d3(note("c2 eb2 g2 bb2").s("sine")
+   .room(0.9).gain(0.25).slow(4))
+
+// Hi-hats qui s'accélèrent progressivement
+d4(s("hh*8").fast(2).gain(0.2))
+d4(s("hh*16").fast(2).gain(0.3))  // Re-evaluate pour build-up
+
+// Reverse cymbal pour la tension
+d5(s("oh").rev().room(0.6).slow(4))</code></pre>
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h3>🍄 Psychedelic & Goa Trance (138-148 BPM)</h3>
+
+                    <div class="example-block">
+                        <h4>Goa Trance Classique - 90s Style</h4>
+                        <pre><code>// Kick puissant goa
+d1(s("bd*4").gain(0.9))
+
+// Bassline tribale et hypnotique
+d2(note("c1 c1 d1 c1 c1 eb1 c1 c1 d1 c1 f1 c1 eb1 c1 d1 c1").s("fm")
+   .lpf(600).gain(0.65).room(0.1))
+
+// Lead acid avec beaucoup de reverb
+d3(note("c3 d3 eb3 g3 bb3 c4 bb3 g3 eb3 d3 c3 d3 eb3 f3 g3 f3").s("sawtooth")
+   .lpf(1500).room(0.6).delay(0.2).gain(0.4).pan(0.3))
+
+// Hi-hats 16ths rapides
+d4(s("hh*16").gain(0.3).pan(0.7))
+
+// Percussions ethniques
+d5(s("~ cp ~ ~ ~ oh ~ cp").room(0.4).gain(0.5))</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Forest Psytrance - Organic Vibes</h4>
+                        <pre><code>// Kick organique
+d1(s("bd*4").gain(0.85).room(0.1))
+
+// Bassline glitchy et complexe
+d2(note("c1 ~ c1 d1 ~ eb1 ~ d1 ~ c1 d1 ~ eb1 f1 ~ d1").s("triangle")
+   .lpf(700).gain(0.6))
+
+// Textures atmosphériques
+d3(note("c3 eb3 f3 g3").s("sine")
+   .room(0.9).delay(0.4).gain(0.25).slow(2))
+
+// Hi-hats organiques avec variations
+d4(s("hh*16").sometimes(fast(1.5)).rarely(rev()).gain(0.3).pan(0.6))
+
+// Glitch percussion
+d5(s("~ ~ oh ~ cp ~ ~ oh").fast(2).gain(0.4).room(0.5))</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Psychedelic Downtempo - Chill Vibes (90-110 BPM)</h4>
+                        <pre><code>// Kick doux et profond
+d1(s("bd ~ ~ bd ~ bd ~ ~").gain(0.7).room(0.3))
+
+// Bassline dubby et spacieuse
+d2(note("c2 ~ ~ ~ eb2 ~ ~ ~ g2 ~ ~ ~ eb2 ~ ~ ~").s("sine")
+   .lpf(400).gain(0.6).room(0.5))
+
+// Pad psychédélique qui flotte
+d3(note("c3 eb3 g3 bb3").s("triangle")
+   .room(0.9).delay(0.5).gain(0.3).slow(4))
+
+// Hi-hats lents et spacieux
+d4(s("hh ~ ~ hh ~ hh ~ ~").gain(0.25).room(0.6).pan(0.6))
+
+// Effets sonores et textures
+d5(note("c4 ~ g4 ~ eb4 ~ bb4 ~").s("fm")
+   .room(0.8).delay(0.4).gain(0.2).slow(2))</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Trippy Soundscape - Ambiant Psychédélique</h4>
+                        <pre><code>// Pas de kick - juste des textures
+d1(note("c2 ~ ~ ~ eb2 ~ ~ ~ g2 ~ ~ ~ bb2 ~ ~ ~").s("sine")
+   .room(0.9).gain(0.4).slow(4))
+
+// Lead qui serpente avec delay infini
+d2(note("c4 eb4 g4 bb4 c5 bb4 g4 eb4").s("fm")
+   .room(0.8).delay(0.5).gain(0.3).slow(2))
+
+// Atmosphère mystérieuse
+d3(note("c3 eb3 f3 g3 bb3 c4").s("triangle")
+   .room(0.95).gain(0.25).slow(8))
+
+// Percussions tribales espacées
+d4(s("~ ~ ~ oh ~ ~ cp ~").room(0.7).gain(0.3).slow(2))
+
+// Reverse effects
+d5(s("hh").rev().room(0.9).slow(4).gain(0.2))</code></pre>
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h3>⚡ Drum & Bass / Jungle (160-180 BPM)</h3>
+
+                    <div class="example-block">
+                        <h4>Neurofunk - Dark DnB</h4>
+                        <pre><code>// Kick + snare breakbeat (signature DnB)
+d1(s("bd ~ ~ ~ ~ ~ sd ~").gain(0.85))
+
+// Bassline neuro complexe
+d2(note("c1 ~ c1 d1 ~ eb1 ~ d1").s("sawtooth")
+   .lpf(600).gain(0.7).room(0.1))
+
+// Hi-hats rapides (double time)
+d3(s("hh*8").gain(0.3).pan(0.6))
+
+// Reese bass (sub bass modulé)
+d4(note("c1 ~ ~ ~ eb1 ~ ~ ~").s("triangle")
+   .lpf(300).gain(0.65).room(0.05))</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Liquid DnB - Melodic & Smooth</h4>
+                        <pre><code>// DnB breakbeat
+d1(s("bd ~ sd bd ~ sd*2 bd ~").gain(0.8))
+
+// Bassline liquide et mélodique
+d2(note("c2 ~ eb2 ~ g2 ~ eb2 ~ bb2 ~ g2 ~").s("sine")
+   .lpf(800).gain(0.6).room(0.3))
+
+// Pads atmosphériques
+d3(note("c3 eb3 g3 bb3").s("triangle")
+   .room(0.8).gain(0.3).slow(2))
+
+// Hi-hats doux
+d4(s("hh*16").gain(0.25).room(0.4))</code></pre>
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h3>🎛️ Techniques Avancées</h3>
+
+                    <div class="example-block">
+                        <h4>Layering Multiple Patterns (Stack)</h4>
+                        <pre><code>// Superposer plusieurs patterns dans un slot
+d1(stack(
+  s("bd*4").gain(0.8),
+  s("hh*8").gain(0.3).pan(0.6),
+  note("c2").s("fm").gain(0.5)
+))</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Transformations Conditionnelles</h4>
+                        <pre><code>// Reverse tous les 4 cycles
+d1(s("bd sd hh cp").every(4, rev()))
+
+// Fast parfois (50% chance)
+d2(s("hh*8").sometimes(fast(2)))
+
+// Rarely slow (25% chance)
+d3(note("c3 e3 g3").s("sine").rarely(slow(2)))
+
+// Often avec effet (75% chance)
+d4(s("bd*4").often(x => x.room(0.5)))</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Alternance de Patterns (&lt;&gt;)</h4>
+                        <pre><code>// Alterne entre deux patterns chaque cycle
+d1(s("<bd*4 | bd*8>"))
+
+// Alterne entre plusieurs mélodies
+d2(note("<c3 e3 g3 | d3 f3 a3 | eb3 g3 bb3>").s("fm"))
+
+// Combinaison d'alternances
+d3(s("<bd sd | bd*4 | bd ~ bd sd>"))</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Effets Combinés - Sound Design</h4>
+                        <pre><code>// Lead psychédélique complet
+d1(note("c3 eb3 g3 bb3 c4").s("fm")
+   .lpf(1200)        // Filtre passe-bas
+   .room(0.6)        // Reverb spatiale
+   .delay(0.25)      // Delay rythmique
+   .pan(0.3)         // Pan à gauche
+   .gain(0.4))       // Volume contrôlé
+
+// Bass avec mouvement
+d2(note("c1 c1 d1 eb1").s("sawtooth")
+   .lpf(600)
+   .room(0.1)
+   .gain(0.7)
+   .every(4, rev()))  // Reverse tous les 4 cycles</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Live Performance Tips</h4>
+                        <pre><code>// Commencer minimal
+d1(s("bd*4"))
+d2(note("c1 ~ ~ ~").s("fm").lpf(500))
+
+// Ajouter progressivement (live coding!)
+d3(s("hh*8").gain(0.3))
+
+// Build tension
+d3(s("hh*16").fast(2).gain(0.4))
+
+// Drop! Tout en même temps
+d1(s("bd*4").gain(0.9))
+d2(note("c1 c1 d1 eb1").s("fm").lpf(700))
+d3(s("hh*16").gain(0.35))
+d4(note("c4 eb4 g4").s("fm").room(0.5))
+
+// Retour au minimal
+d3(silence())
+d4(silence())
+
+// Stop tout
+hush()</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Master Effects - Transitions Créatives</h4>
+                        <pre><code>// Transition avec filtre master (psytrance style)
+masterLPF(800)   // Atténue les aigus
+masterLPF(500)   // Plus sombre
+masterLPF(300)   // Très sombre
+masterLPF(20000) // Retour normal (drop!)
+
+// Couper les kicks/basses avec HPF
+masterHPF(100)   // Coupe un peu les basses
+masterHPF(200)   // Coupe beaucoup (plus de kick!)
+masterHPF(20)    // Retour normal
+
+// Breakdown atmosphérique
+masterReverb(0.6)  // Beaucoup de reverb
+masterDelay(0.4)   // Delay spacieux
+masterHPF(150)     // Coupe les basses
+// ... puis drop avec reset:
+masterReset()      // Retour au son sec et puissant!
+
+// Build-up avec volume
+masterVolume(0.3)  // Très faible
+masterVolume(0.5)  // Monte
+masterVolume(0.7)  // Monte encore
+masterVolume(1.0)  // Full power!
+
+// Compression pour plus de punch
+masterCompressor(-15, 6)  // Compression forte
+masterCompressor(-25, 2)  // Compression légère</code></pre>
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h3>🎵 Quick Copy Templates</h3>
+                    <p>Templates prêts à copier-coller et modifier :</p>
+
+                    <div class="example-block">
+                        <h4>Template Psytrance Complet</h4>
+                        <pre><code>// === PSYTRANCE 140 BPM SET ===
+
+// INTRO (minimal)
+d1(s("bd*4").gain(0.8))
+d2(note("c1 ~ ~ ~ c1 ~ ~ ~").s("fm").lpf(500))
+
+// BUILD (ajouter layers)
+d3(s("hh*8").gain(0.25))
+d4(note("c3 eb3 g3").s("fm").room(0.5).slow(2))
+
+// DROP (full power!)
+d1(s("bd*4").gain(0.9))
+d2(note("c1 c1 d1 eb1 c1 d1 f1 eb1").s("fm").lpf(700))
+d3(s("hh*16").gain(0.35))
+d4(note("c4 eb4 g4 bb4").s("fm").room(0.5).delay(0.25))
+d5(s("~ cp ~ oh").gain(0.5))
+
+// BREAKDOWN
+d2(silence())
+d3(silence())
+d5(silence())
+
+// OUTRO
+hush()</code></pre>
                     </div>
                 </section>
             </div>
@@ -427,6 +864,7 @@ d1(s("bd sd")) // Remplace le pattern du slot 1</code></pre>
     <!-- App Scripts -->
     <script src="core/parser.js"></script>
     <script src="core/pattern.js"></script>
+    <script src="audio/master.js"></script>
     <script src="audio/synths.js"></script>
     <script src="audio/samples.js"></script>
     <script src="audio/effects.js"></script>
