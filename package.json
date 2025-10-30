@@ -1,0 +1,21 @@
+{
+  "name": "algorave",
+  "version": "1.0.0",
+  "description": "Live coding music for fun and learning",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "music",
+    "live-coding",
+    "algorave",
+    "electronic"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

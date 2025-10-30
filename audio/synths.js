@@ -101,50 +101,66 @@ class SynthEngine {
      * @param {string} synthType - Type of synth
      * @param {number} time - When to play (Tone.js time)
      * @param {number} duration - How long to play
-     * @param {number} gain - Volume (0-2, default 1.0)
+     * @param {Object|number} effects - Effect settings {gain, room, delay, lpf, hpf, pan} or just gain for backward compat
      */
-    playNote(midiNote, synthType = 'sine', time = '+0', duration = '8n', gain = 1.0) {
+    playNote(midiNote, synthType = 'sine', time = '+0', duration = '8n', effects = {gain: 1.0}) {
         if (!this.initialized) {
             console.warn('SynthEngine not initialized');
             return;
         }
 
+        // Backward compatibility: if effects is a number, treat it as gain
+        if (typeof effects === 'number') {
+            effects = { gain: effects };
+        }
+
+        if (!effects) effects = {};
+        const gain = effects.gain !== undefined ? effects.gain : 1.0;
+
         const synth = this.synths[synthType] || this.synths.sine;
         const frequency = Tone.Frequency(midiNote, 'midi').toFrequency();
-        const velocity = gain; // Use gain as velocity (0-1 range is standard, but we allow 0-2)
+        const velocity = gain; // Use gain as velocity
 
         synth.triggerAttackRelease(frequency, duration, time, velocity);
     }
 
     /**
-     * Create and play a synthesized drum sound
+     * Create and play a synthesized drum sound with effect chain
      * @param {string} type - Drum type (kick, snare, hihat, clap, etc.)
      * @param {number} time - When to play
-     * @param {number} gain - Volume (0-2, default 1.0)
+     * @param {Object|number} effects - Effect settings {gain, room, delay, lpf, hpf, pan} or just gain for backward compat
+     * @param {number} duration - Duration of the drum (in seconds) - used for envelope timing
      */
-    playDrum(type, time = '+0', gain = 1.0) {
+    playDrum(type, time = '+0', effects = {gain: 1.0}, duration = null) {
         if (!this.initialized) return;
+
+        // Backward compatibility: if effects is a number, treat it as gain
+        if (typeof effects === 'number') {
+            effects = { gain: effects };
+        }
+
+        if (!effects) effects = {};
 
         switch (type.toLowerCase()) {
             case 'bd':
             case 'kick':
-                this.playKick(time, gain);
+                this.playKick(time, effects, duration);
                 break;
             case 'sd':
             case 'snare':
-                this.playSnare(time, gain);
+                this.playSnare(time, effects, duration);
                 break;
             case 'hh':
             case 'hihat':
-                this.playHihat(time, gain);
+                this.playHihat(time, effects, duration);
                 break;
             case 'cp':
             case 'clap':
-                this.playClap(time, gain);
+                this.playClap(time, effects, duration);
                 break;
             case 'oh':
             case 'openhh':
-                this.playOpenHH(time, gain);
+                this.playOpenHH(time, effects, duration);
                 break;
             default:
                 console.warn(`Unknown drum type: ${type}`);
@@ -152,50 +168,87 @@ class SynthEngine {
     }
 
     /**
-     * Synthesized kick drum
+     * Synthesized kick drum with effect chain
+     * @param {number} time - When to play
+     * @param {Object} effects - Effect settings
+     * @param {number} duration - Event duration in seconds (respects pattern timing)
      */
-    playKick(time, gain = 1.0) {
-        const gainNode = new Tone.Gain(gain).connect(window.masterBus.getInput());
-        const osc = new Tone.Oscillator(150, 'sine').connect(gainNode);
+    playKick(time, effects = {gain: 1.0}, duration = null) {
+        // Ensure effects is an object
+        if (typeof effects === 'number') {
+            effects = { gain: effects };
+        }
+        if (!effects) effects = {};
+
+        // FIXED DURATION for tight kick drum (300ms)
+        // Ignores the scheduler duration parameter (which represents time slot, not sound duration)
+        const kickDuration = 0.3;
+
+        // Create source node that will feed into effect chain
+        const sourceGain = new Tone.Gain(1.0);
+        const osc = new Tone.Oscillator(150, 'sine').connect(sourceGain);
         const env = new Tone.AmplitudeEnvelope({
             attack: 0.001,
-            decay: 0.4,
+            decay: 0.24,  // Fixed decay for tight kick
             sustain: 0,
             release: 0.01
-        }).connect(gainNode);
+        }).connect(sourceGain);
 
         osc.connect(env);
-        osc.start(time).stop(time + 0.5);
-        osc.frequency.setValueAtTime(150, time);
-        osc.frequency.exponentialRampToValueAtTime(40, time + 0.1);
-        env.triggerAttackRelease(0.5, time);
 
-        // Cleanup nodes after playback to prevent memory leak
+        // Create effect chain for this drum
+        const effectChain = window.effectsEngine.createEffectChain(effects, sourceGain);
+
+        // Connect effect chain output to master bus
+        effectChain.connect(window.masterBus.getInput());
+
+        // Frequency envelope: pitch falls from 150 to 40 Hz
+        osc.start(time).stop(time + kickDuration);
+        osc.frequency.setValueAtTime(150, time);
+        osc.frequency.exponentialRampToValueAtTime(40, time + 0.03);
+        env.triggerAttackRelease(kickDuration, time);
+
+        // Cleanup nodes after playback
         setTimeout(() => {
             try {
                 osc.dispose();
                 env.dispose();
-                gainNode.dispose();
+                sourceGain.dispose();
+                effectChain.dispose();
             } catch (e) {
                 // Silently ignore disposal errors
             }
-        }, (time - Tone.now()) * 1000 + 1000);
+        }, 400); // Fixed 400ms cleanup
     }
 
     /**
-     * Synthesized snare drum
+     * Synthesized snare drum with effect chain
+     * @param {number} time - When to play
+     * @param {Object} effects - Effect settings
+     * @param {number} duration - Event duration in seconds (respects pattern timing)
      */
-    playSnare(time, gain = 1.0) {
-        const gainNode = new Tone.Gain(gain).connect(window.masterBus.getInput());
+    playSnare(time, effects = {gain: 1.0}, duration = null) {
+        // Ensure effects is an object
+        if (typeof effects === 'number') {
+            effects = { gain: effects };
+        }
+        if (!effects) effects = {};
+
+        // FIXED DURATION for snappy snare (150ms)
+        // Ignores the scheduler duration parameter (which represents time slot, not sound duration)
+        const snareDuration = 0.15;
+
+        // Create source node that will feed into effect chain
+        const sourceGain = new Tone.Gain(1.0);
 
         // Noise component
         const noise = new Tone.Noise('white');
         const noiseEnv = new Tone.AmplitudeEnvelope({
             attack: 0.001,
-            decay: 0.15,
+            decay: 0.1,  // Fixed decay for snare noise
             sustain: 0,
             release: 0.01
-        }).connect(gainNode);
+        }).connect(sourceGain);
 
         const noiseFilter = new Tone.Filter(4000, 'highpass').connect(noiseEnv);
         noise.connect(noiseFilter);
@@ -204,18 +257,24 @@ class SynthEngine {
         const osc = new Tone.Oscillator(200, 'triangle');
         const oscEnv = new Tone.AmplitudeEnvelope({
             attack: 0.001,
-            decay: 0.1,
+            decay: 0.075,  // Fixed decay for snare tone
             sustain: 0,
             release: 0.01
-        }).connect(gainNode);
+        }).connect(sourceGain);
 
         osc.connect(oscEnv);
 
-        noise.start(time).stop(time + 0.2);
-        noiseEnv.triggerAttackRelease(0.15, time);
+        // Create effect chain for this drum
+        const effectChain = window.effectsEngine.createEffectChain(effects, sourceGain);
 
-        osc.start(time).stop(time + 0.15);
-        oscEnv.triggerAttackRelease(0.1, time);
+        // Connect effect chain output to master bus
+        effectChain.connect(window.masterBus.getInput());
+
+        noise.start(time).stop(time + snareDuration);
+        noiseEnv.triggerAttackRelease(0.1, time);
+
+        osc.start(time).stop(time + snareDuration);
+        oscEnv.triggerAttackRelease(0.075, time);
 
         // Cleanup nodes after playback
         setTimeout(() => {
@@ -225,32 +284,53 @@ class SynthEngine {
                 noiseEnv.dispose();
                 osc.dispose();
                 oscEnv.dispose();
-                gainNode.dispose();
+                sourceGain.dispose();
+                effectChain.dispose();
             } catch (e) {
                 // Silently ignore disposal errors
             }
-        }, (time - Tone.now()) * 1000 + 500);
+        }, 250); // Fixed 250ms cleanup
     }
 
     /**
-     * Synthesized hi-hat
+     * Synthesized hi-hat with effect chain
+     * @param {number} time - When to play
+     * @param {Object} effects - Effect settings
+     * @param {number} duration - Event duration (scheduler parameter - NOT used for envelope)
      */
-    playHihat(time, gain = 1.0) {
-        const gainNode = new Tone.Gain(gain).connect(window.masterBus.getInput());
+    playHihat(time, effects = {gain: 1.0}, duration = null) {
+        // Ensure effects is an object
+        if (typeof effects === 'number') {
+            effects = { gain: effects };
+        }
+        if (!effects) effects = {};
+
+        // FIXED DURATION for snappy hihat sound (50ms)
+        // Ignores the scheduler duration parameter (which represents time slot, not sound duration)
+        const hihatDuration = 0.05;
+
+        // Create source node that will feed into effect chain
+        const sourceGain = new Tone.Gain(1.0);
         const noise = new Tone.Noise('white');
         const filter = new Tone.Filter(8000, 'highpass');
         const env = new Tone.AmplitudeEnvelope({
             attack: 0.001,
-            decay: 0.05,
+            decay: 0.04,  // Fixed decay for crisp hihat
             sustain: 0,
             release: 0.01
-        }).connect(gainNode);
+        }).connect(sourceGain);
 
         noise.connect(filter);
         filter.connect(env);
 
-        noise.start(time).stop(time + 0.1);
-        env.triggerAttackRelease(0.05, time);
+        // Create effect chain for this drum
+        const effectChain = window.effectsEngine.createEffectChain(effects, sourceGain);
+
+        // Connect effect chain output to master bus
+        effectChain.connect(window.masterBus.getInput());
+
+        noise.start(time).stop(time + hihatDuration);
+        env.triggerAttackRelease(0.04, time);
 
         // Cleanup nodes after playback
         setTimeout(() => {
@@ -258,35 +338,56 @@ class SynthEngine {
                 noise.dispose();
                 filter.dispose();
                 env.dispose();
-                gainNode.dispose();
+                sourceGain.dispose();
+                effectChain.dispose();
             } catch (e) {
                 // Silently ignore disposal errors
             }
-        }, (time - Tone.now()) * 1000 + 200);
+        }, 150); // Fixed 150ms cleanup
     }
 
     /**
-     * Synthesized clap
+     * Synthesized clap with effect chain
+     * @param {number} time - When to play
+     * @param {Object} effects - Effect settings
+     * @param {number} duration - Event duration in seconds (respects pattern timing)
      */
-    playClap(time, gain = 1.0) {
-        const gainNode = new Tone.Gain(gain).connect(window.masterBus.getInput());
+    playClap(time, effects = {gain: 1.0}, duration = null) {
+        // Ensure effects is an object
+        if (typeof effects === 'number') {
+            effects = { gain: effects };
+        }
+        if (!effects) effects = {};
+
+        // FIXED DURATION for natural clap (120ms)
+        // Ignores the scheduler duration parameter (which represents time slot, not sound duration)
+        const clapDuration = 0.12;
+
+        // Create source node that will feed into effect chain
+        const sourceGain = new Tone.Gain(1.0);
         const noise = new Tone.Noise('white');
         const filter = new Tone.Filter(2000, 'bandpass');
         const env = new Tone.AmplitudeEnvelope({
             attack: 0.001,
-            decay: 0.08,
+            decay: 0.064,  // Fixed decay for clap
             sustain: 0.2,
-            release: 0.05
-        }).connect(gainNode);
+            release: 0.04
+        }).connect(sourceGain);
 
         noise.connect(filter);
         filter.connect(env);
 
-        // Multiple hits for clap
-        noise.start(time).stop(time + 0.15);
-        env.triggerAttackRelease(0.05, time);
-        env.triggerAttackRelease(0.05, time + 0.02);
-        env.triggerAttackRelease(0.1, time + 0.04);
+        // Create effect chain for this drum
+        const effectChain = window.effectsEngine.createEffectChain(effects, sourceGain);
+
+        // Connect effect chain output to master bus
+        effectChain.connect(window.masterBus.getInput());
+
+        // Multiple hits for clap (fixed spacing)
+        noise.start(time).stop(time + clapDuration);
+        env.triggerAttackRelease(0.04, time);
+        env.triggerAttackRelease(0.04, time + 0.015);
+        env.triggerAttackRelease(0.08, time + 0.032);
 
         // Cleanup nodes after playback
         setTimeout(() => {
@@ -294,32 +395,53 @@ class SynthEngine {
                 noise.dispose();
                 filter.dispose();
                 env.dispose();
-                gainNode.dispose();
+                sourceGain.dispose();
+                effectChain.dispose();
             } catch (e) {
                 // Silently ignore disposal errors
             }
-        }, (time - Tone.now()) * 1000 + 300);
+        }, 220); // Fixed 220ms cleanup
     }
 
     /**
-     * Synthesized open hi-hat
+     * Synthesized open hi-hat with effect chain
+     * @param {number} time - When to play
+     * @param {Object} effects - Effect settings
+     * @param {number} duration - Event duration in seconds (respects pattern timing)
      */
-    playOpenHH(time, gain = 1.0) {
-        const gainNode = new Tone.Gain(gain).connect(window.masterBus.getInput());
+    playOpenHH(time, effects = {gain: 1.0}, duration = null) {
+        // Ensure effects is an object
+        if (typeof effects === 'number') {
+            effects = { gain: effects };
+        }
+        if (!effects) effects = {};
+
+        // FIXED DURATION for open hi-hat (250ms)
+        // Ignores the scheduler duration parameter (which represents time slot, not sound duration)
+        const openHHDuration = 0.25;
+
+        // Create source node that will feed into effect chain
+        const sourceGain = new Tone.Gain(1.0);
         const noise = new Tone.Noise('white');
         const filter = new Tone.Filter(7000, 'highpass');
         const env = new Tone.AmplitudeEnvelope({
             attack: 0.001,
-            decay: 0.3,
+            decay: 0.15,  // Fixed decay for open hihat
             sustain: 0,
-            release: 0.1
-        }).connect(gainNode);
+            release: 0.05
+        }).connect(sourceGain);
 
         noise.connect(filter);
         filter.connect(env);
 
-        noise.start(time).stop(time + 0.5);
-        env.triggerAttackRelease(0.3, time);
+        // Create effect chain for this drum
+        const effectChain = window.effectsEngine.createEffectChain(effects, sourceGain);
+
+        // Connect effect chain output to master bus
+        effectChain.connect(window.masterBus.getInput());
+
+        noise.start(time).stop(time + openHHDuration);
+        env.triggerAttackRelease(0.15, time);
 
         // Cleanup nodes after playback
         setTimeout(() => {
@@ -327,11 +449,12 @@ class SynthEngine {
                 noise.dispose();
                 filter.dispose();
                 env.dispose();
-                gainNode.dispose();
+                sourceGain.dispose();
+                effectChain.dispose();
             } catch (e) {
                 // Silently ignore disposal errors
             }
-        }, (time - Tone.now()) * 1000 + 600);
+        }, 350); // Fixed 350ms cleanup
     }
 
     /**

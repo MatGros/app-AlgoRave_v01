@@ -1,0 +1,91 @@
+// PSYTRANCE SET - 140 BPM 🎵
+// 1. Click START first!
+// 2. Press Ctrl+Enter on each line to build the track
+// 3. Modify and re-evaluate to change patterns live!
+
+// ====== BASIC PSYTRANCE PATTERN ======
+
+// Slot 1: Powerful kick 4-on-the-floor (foundation)
+d1(s("bd*4").gain(0.9))
+
+// Slot 2: Aggressive rolling bassline (16th notes)
+d2(note("c1 c1 d1 eb1 c1 d1 f1 eb1 c1 d1 eb1 f1 g1 f1 eb1 d1").s("sawtooth").lpf(650).gain(0.7))
+
+// Slot 3: Fast hi-hats (psytrance signature)
+d3(s("hh*16").gain(0.35).pan(0.6))
+
+// Slot 4: Off-beat claps and open hats
+d4(s("~ cp ~ oh ~ cp ~ oh").gain(0.55))
+
+// ====== ADVANCED PATTERNS ======
+
+// Heavy acid bassline (more aggressive)
+d2(note("c1 c1 d1 eb1 c1 d1 f1 eb1 c1 d1 eb1 f1 g1 f1 eb1 d1").s("square").lpf(700).gain(0.75).room(0.1))
+
+// Psychedelic lead with punch
+d5(note("c4 eb4 g4 bb4 c5 bb4 g4 eb4").s("sawtooth").gain(0.5).room(0.5).delay(0.25).pan(0.3))
+
+// Add powerful snare on 2 and 4
+d6(s("~ ~ sd ~ ~ ~ sd ~").gain(0.7))
+
+// Trippy hi-hat variations
+d3(s("hh*16").gain(0.35).every(4, fast(2)).pan(0.65))
+
+// ====== BREAKDOWN PATTERNS ======
+
+// Minimal (just kick + deep bass)
+d1(s("bd*4").gain(0.85))
+d2(note("c1 ~ ~ ~ eb1 ~ ~ ~").s("sine").lpf(400).gain(0.6))
+d3(silence())
+d4(silence())
+d5(silence())
+d6(silence())
+
+// Build up tension
+d3(s("hh*8").gain(0.3).fast(2))
+d5(note("c3 eb3 g3 bb3").s("triangle").gain(0.4).room(0.7).slow(2))
+
+// ====== FULL POWER ======
+
+// Stack everything with PUNCH!
+d1(s("bd*4").gain(0.95))
+d2(note("c1 c1 d1 eb1 c1 d1 f1 eb1 c1 d1 eb1 f1 g1 f1 eb1 d1").s("square").lpf(700).gain(0.8).room(0.1))
+d3(s("hh*16").gain(0.35).pan(0.65))
+d4(s("~ cp ~ oh ~ cp ~ oh").gain(0.6))
+d5(note("c4 eb4 g4 bb4 c5 bb4 g4 eb4").s("sawtooth").gain(0.5).room(0.5).delay(0.25).pan(0.3))
+d6(s("~ ~ sd ~ ~ ~ sd ~").gain(0.75).room(0.3))
+
+// ====== VARIATIONS ======
+
+// Reverse bassline every 4 cycles (trippy!)
+d2(note("c1 c1 d1 eb1 f1 g1 f1 eb1").s("square").every(4, rev()).lpf(650).gain(0.8))
+
+// Alternate kick pattern (more energy)
+d1(s("<bd*4 bd*8>").gain(0.95))
+
+// Crazy hi-hats with variations
+d3(s("hh*16").sometimes(fast(2)).gain(0.35).pan(0.6))
+
+// ====== MASTER EFFECTS - LIVE TRANSITIONS ======
+
+// Filter sweep (psytrance classic!)
+masterLPF(800)   // Darker sound
+masterLPF(500)   // Even darker
+masterLPF(20000) // DROP! Full spectrum
+
+// Build with master volume
+masterVolume(0.5)  // Quieter
+masterVolume(0.8)  // Normal
+masterVolume(1.0)  // FULL POWER!
+
+// ====== STOP CONTROLS ======
+
+// Stop all
+hush()
+
+// Stop specific slots
+d5(silence())
+d6(silence())
+
+// Reset master effects
+masterReset()

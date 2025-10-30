@@ -1,0 +1,70 @@
+// DEEP TECHNO - 125 BPM 🎵
+// Minimal Berlin-style techno with hypnotic bassline
+
+// Deep techno kick with reverb
+d1(s("bd*4").gain(0.8).room(0.2))
+d1(s("bd*4").gain(0.8).room(0.2))
+// Hi-hats subtils (16ths)
+d2(s("hh*16").gain(0.25).pan(0.6))
+
+// Claps on beats 2 and 4
+d3(s("~ cp ~ cp").gain(0.5).room(0.4))
+
+// Hypnotic bassline
+d4(note("c2 ~ c2 ~ eb2 ~ c2 ~").s("sawtooth").lpf(500).gain(0.65))
+
+// Add depth with sub-bass
+d5(note("c1 ~ ~ ~ c1 ~ ~ ~").s("sine").lpf(200).gain(0.5))
+
+// ====== BUILD UP ======
+
+// More energy to hi-hats
+d2(s("hh*16").gain(0.3).pan(0.65))
+
+// Add a simple lead
+d6(note("c3 ~ eb3 ~ c3 ~ eb3 ~").s("square").lpf(1200).gain(0.4).room(0.3))
+
+// ====== FULL POWER ======
+
+// Powerful kick
+d1(s("bd*4").gain(0.9))
+
+// Fast hi-hats
+d2(s("hh*16").gain(0.35).pan(0.6))
+
+// Aggressive claps
+d3(s("~ cp ~ cp").gain(0.6).room(0.3))
+
+// Driving bassline
+d4(note("c2 c2 eb2 c2 f2 c2 eb2 c2").s("square").lpf(600).gain(0.75))
+
+// Sub-bass movement
+d5(note("c1 ~ ~ ~ eb1 ~ ~ ~").s("sine").lpf(250).gain(0.6))
+
+// Melodic element
+d6(note("c3 ~ c3 ~ g2 ~ c3 ~").s("triangle").lpf(1500).gain(0.4).room(0.2))
+
+// ====== BREAKDOWN ======
+
+// Strip it down
+d1(s("bd*4").gain(0.7))
+d2(silence())
+d3(silence())
+d4(note("c2 ~ ~ ~ ~ ~ ~ ~").s("sine").lpf(400).gain(0.5))
+d5(silence())
+d6(silence())
+
+// Rebuild slowly
+d2(s("hh*8").gain(0.2))
+d6(note("c3 eb3 g3").s("sine").room(0.6).slow(2).gain(0.3))
+
+// ====== MASTER EFFECTS ======
+
+// Sweep the filter for tension
+masterLPF(2000)  // Dark
+masterLPF(5000)  // Medium
+masterLPF(20000) // Open
+
+// Reset
+hush()
+masterReset()

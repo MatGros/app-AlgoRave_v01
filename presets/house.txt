@@ -1,0 +1,79 @@
+// HOUSE MUSIC - 130 BPM 🎵
+// Funky house with groove and energy
+
+// Classic 4-on-the-floor kick
+d1(s("bd*4").gain(0.85))
+
+// Shaker pattern (off-beat hi-hats)
+d2(s("hh*8 ~ hh*4").gain(0.3).pan(0.7))
+
+// Snare on 2 and 4
+d3(s("~ ~ sd ~").gain(0.6).room(0.2))
+
+// Funky bass groove
+d4(note("c2 ~ c2 d2 ~ eb2 ~ d2").s("sawtooth").lpf(600).gain(0.7))
+
+// ====== BUILD ENERGY ======
+
+// More hi-hat layers
+d2(s("hh*16").gain(0.25).pan(0.8))
+
+// Add a clap
+d5(s("~ cp ~ ~").gain(0.5).pan(0.3))
+
+// Melodic stabs
+d6(note("c3 eb3 g3").s("square").gain(0.4).room(0.3).pan(0.5))
+
+// ====== PEAK ENERGY ======
+
+// Stronger kick
+d1(s("bd*4").gain(0.9))
+
+// Complex hi-hat pattern
+d2(s("hh*16").every(4, fast(1.5)).gain(0.35).pan(0.7))
+
+// Driving bassline
+d4(note("c2 c2 d2 eb2 c2 eb2 f2 eb2").s("square").lpf(700).gain(0.8))
+
+// Add depth
+d7(note("c1 ~ ~ ~ c1 ~ ~ ~").s("sine").lpf(300).gain(0.5))
+
+// Soulful pad/strings
+d8(note("c3 eb3 g3 bb3").s("sine").room(0.7).slow(2).gain(0.3))
+
+// ====== BREAKDOWN ======
+
+// Thin it out
+d2(silence())
+d3(silence())
+d5(silence())
+d6(silence())
+d7(silence())
+
+// Just kick and bass
+d1(s("bd*4").gain(0.8))
+d4(note("c2 ~ ~ ~ eb2 ~ ~ ~").s("sine").lpf(400).gain(0.6))
+
+// Build back up with pad
+d8(note("c3 eb3 g3 bb3").s("triangle").room(0.8).slow(2).gain(0.4))
+
+// ====== FINAL BUILD ======
+
+// Everything back
+d1(s("bd*4").gain(0.9))
+d2(s("hh*16").gain(0.3).pan(0.7))
+d3(s("~ ~ sd ~").gain(0.6))
+d4(note("c2 c2 d2 eb2 c2 eb2 f2 eb2").s("square").lpf(700).gain(0.8))
+d5(s("~ cp ~ ~").gain(0.5))
+d6(note("c3 eb3 g3").s("triangle").gain(0.45).room(0.2))
+d7(note("c1 ~ ~ ~ c1 ~ ~ ~").s("sine").lpf(300).gain(0.6))
+d8(note("c3 eb3 g3 bb3").s("sine").room(0.6).gain(0.35))
+
+// Master effects for final build
+masterVolume(0.5)
+masterVolume(0.8)
+masterVolume(1.0)
+
+// Stop
+hush()
+masterReset()

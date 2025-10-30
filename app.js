@@ -21,6 +21,8 @@ class AlgoRaveApp {
     constructor() {
         this.editor = null;
         this.isInitialized = false;
+        this.saveTimeout = null; // Debounce timer for auto-save
+        this.currentPreset = null; // Track which preset is currently loaded
         this.STORAGE_KEY = 'algorave_code';
         this.DEFAULT_CODE = `// PSYTRANCE SET - 140 BPM 🎵
 // 1. Click START first!
@@ -122,10 +124,13 @@ masterReset()`;
         if (this.isInitialized) return;
 
         // Initialize CodeMirror editor
-        this.initEditor();
+        await this.initEditor();
 
         // Setup event listeners
         this.setupEventListeners();
+
+        // Setup preset selector
+        await this.setupPresetSelector();
 
         // Initialize visualizer
         window.visualizer.init();
@@ -156,11 +161,11 @@ masterReset()`;
     /**
      * Initialize CodeMirror editor
      */
-    initEditor() {
+    async initEditor() {
         const textarea = document.getElementById('codeEditor');
 
         // Load saved code or use default
-        const savedCode = this.loadCode();
+        const savedCode = await this.loadCode();
         textarea.value = savedCode;
 
         this.editor = CodeMirror.fromTextArea(textarea, {
@@ -337,6 +342,44 @@ masterReset()`;
     }
 
     /**
+     * Setup preset selector dropdown
+     */
+    async setupPresetSelector() {
+        const select = document.getElementById('presetSelect');
+        if (!select) return;
+
+        try {
+            const presets = await this.loadPresets();
+
+            // Clear existing options (keep the placeholder)
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+
+            // Add preset options
+            presets.forEach(preset => {
+                const option = document.createElement('option');
+                option.value = preset.name;
+                // Format the name nicely (capitalize first letter)
+                option.textContent = preset.name.charAt(0).toUpperCase() + preset.name.slice(1);
+                select.appendChild(option);
+            });
+
+            // Handle selection
+            select.addEventListener('change', async (e) => {
+                if (e.target.value) {
+                    await this.loadPreset(e.target.value);
+                    // Dropdown now stays with the selected preset (for Save to Preset)
+                }
+            });
+
+            this.log('✓ Presets loaded', 'success');
+        } catch (error) {
+            console.warn('Could not load presets:', error);
+        }
+    }
+
+    /**
      * Setup event listeners
      */
     setupEventListeners() {
@@ -368,6 +411,11 @@ masterReset()`;
         // Clear console
         document.getElementById('clearConsole').addEventListener('click', () => {
             this.clearConsole();
+        });
+
+        // Save to preset button
+        document.getElementById('savePresetBtn').addEventListener('click', () => {
+            this.saveToPreset();
         });
 
         // Reset code button
@@ -696,39 +744,302 @@ masterReset()`;
     }
 
     /**
-     * Save code to localStorage
+     * Save code to server (auto-save with debounce)
+     * Debounce prevents too many requests during rapid typing
      */
     saveCode() {
-        try {
-            const code = this.editor.getValue();
-            localStorage.setItem(this.STORAGE_KEY, code);
-        } catch (error) {
-            console.error('Failed to save code:', error);
+        // Clear existing timeout to debounce
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
         }
+
+        // Schedule save after 1 second of inactivity
+        this.saveTimeout = setTimeout(() => {
+            try {
+                const code = this.editor.getValue();
+                fetch('/api/save-code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ code })
+                })
+                .then(async response => {
+                    if (!response.ok) {
+                        const data = await response.json();
+                        console.warn(`Auto-save failed: HTTP ${response.status}`, data);
+                        return;
+                    }
+                    const data = await response.json();
+                    if (data.success) {
+                        console.log('[Auto-save] Code saved at', new Date().toLocaleTimeString());
+                    }
+                })
+                .catch(error => {
+                    console.warn('Auto-save error:', error.message);
+                });
+
+                this.saveTimeout = null;
+            } catch (error) {
+                console.error('Failed to prepare save:', error);
+                this.saveTimeout = null;
+            }
+        }, 1000); // 1 second debounce
     }
 
     /**
-     * Load code from localStorage or return default
+     * Load code from server or return default
      */
-    loadCode() {
+    async loadCode() {
         try {
-            const savedCode = localStorage.getItem(this.STORAGE_KEY);
-            return savedCode !== null ? savedCode : this.DEFAULT_CODE;
+            const response = await fetch('/api/load-code');
+            const data = await response.json();
+
+            if (data.code) {
+                return data.code;
+            }
+            return this.DEFAULT_CODE;
         } catch (error) {
-            console.error('Failed to load code:', error);
+            console.error('Failed to load code from server:', error);
             return this.DEFAULT_CODE;
         }
     }
 
     /**
-     * Reset code to default
+     * Load available presets
      */
-    resetCode() {
-        if (confirm('Reset code to default? This will overwrite your current code.')) {
-            this.editor.setValue(this.DEFAULT_CODE);
-            this.saveCode();
-            this.log('Code reset to default', 'info');
+    async loadPresets() {
+        try {
+            const response = await fetch('/api/presets');
+            const data = await response.json();
+            return data.presets || [];
+        } catch (error) {
+            console.error('Failed to load presets:', error);
+            return [];
         }
+    }
+
+    /**
+     * Load a specific preset by name
+     * IMPORTANT: Presets are TEMPORARY and are NOT saved to user_code.txt
+     * User must click "Save" to persist their own code
+     */
+    async loadPreset(presetName) {
+        try {
+            const response = await fetch(`/api/preset/${presetName}`);
+            const data = await response.json();
+
+            if (data.code) {
+                this.editor.setValue(data.code);
+
+                // Track which preset is currently loaded
+                this.currentPreset = presetName;
+
+                // Update the dropdown to show current preset
+                const select = document.getElementById('presetSelect');
+                if (select) {
+                    select.value = presetName;
+                }
+
+                // DO NOT SAVE TO USER CODE! Presets are temporary
+                // User must explicitly click Save button to persist their own code
+                this.log(`✓ Loaded preset: ${presetName}`, 'success');
+                return true;
+            } else {
+                this.log(`✗ Preset not found: ${presetName}`, 'error');
+                return false;
+            }
+        } catch (error) {
+            console.error('Failed to load preset:', error);
+            this.log(`✗ Error loading preset: ${error.message}`, 'error');
+            return false;
+        }
+    }
+
+    /**
+     * Save code immediately (no debounce)
+     * Used for preset loads and explicit resets
+     */
+    async saveCodeImmediate() {
+        try {
+            const code = this.editor.getValue();
+            const response = await fetch('/api/save-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ code })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            if (!data.success) {
+                throw new Error(data.error || 'Server returned error');
+            }
+
+            console.log('✓ Code saved successfully to server');
+            return true;
+        } catch (error) {
+            console.error('Save failed:', error.message);
+            throw error; // Re-throw so manualSave can catch it
+        }
+    }
+
+    /**
+     * Manual save with visual feedback
+     * Called when user clicks Save button
+     */
+    async manualSave() {
+        const btn = document.getElementById('saveCodeBtn');
+        if (!btn) return;
+
+        try {
+            // Show "saving" state
+            btn.classList.add('saving');
+            btn.textContent = '⏳ Saving...';
+
+            // DEBUG: Log what we're trying to save
+            const code = this.editor.getValue();
+            console.log(`[Save] Sending ${code.length} characters to server...`);
+
+            // Save the code
+            const result = await this.saveCodeImmediate();
+
+            // Show "saved" state
+            btn.classList.remove('saving');
+            btn.classList.add('saved');
+            btn.textContent = '✓ Saved!';
+            this.log(`Code saved to server (${code.length} chars)`, 'success');
+            console.log('[Save] SUCCESS: Code was saved');
+
+            // Reset button after 2 seconds
+            setTimeout(() => {
+                btn.classList.remove('saved');
+                btn.textContent = '💾 Save';
+            }, 2000);
+        } catch (error) {
+            console.error('[Save] FAILED:', error);
+            btn.classList.remove('saving');
+            btn.textContent = '❌ Error';
+            this.log(`Failed to save code: ${error.message}`, 'error');
+
+            // Reset button after 2 seconds
+            setTimeout(() => {
+                btn.textContent = '💾 Save';
+            }, 2000);
+        }
+    }
+
+    /**
+     * Save code to the currently loaded preset
+     * Uses this.currentPreset - no dialog needed!
+     */
+    async saveToPreset() {
+        const btn = document.getElementById('savePresetBtn');
+        if (!btn) return;
+
+        try {
+            // Check if a preset is currently loaded
+            if (!this.currentPreset) {
+                this.log('⚠️ Load a preset first, then Save to Preset', 'error');
+                return;
+            }
+
+            // Show "saving" state
+            btn.classList.add('saving');
+            btn.textContent = '⏳ Saving...';
+
+            // Get current code
+            const code = this.editor.getValue();
+            console.log(`[Save Preset] Saving ${code.length} characters to preset "${this.currentPreset}"...`);
+
+            // Send to server
+            const response = await fetch(`/api/preset/${this.currentPreset}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ code })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            if (!data.success) {
+                throw new Error(data.error || 'Server returned error');
+            }
+
+            // Show "saved" state
+            btn.classList.remove('saving');
+            btn.classList.add('saved');
+            btn.textContent = '✓ Saved!';
+            this.log(`✓ Code saved to preset: ${this.currentPreset}`, 'success');
+            console.log('[Save Preset] SUCCESS: Preset was saved');
+
+            // Reset button after 2 seconds
+            setTimeout(() => {
+                btn.classList.remove('saved');
+                btn.textContent = '💾 Save to Preset';
+            }, 2000);
+
+        } catch (error) {
+            console.error('[Save Preset] FAILED:', error);
+            btn.classList.remove('saving');
+            btn.textContent = '❌ Error';
+            this.log(`Failed to save preset: ${error.message}`, 'error');
+
+            // Reset button after 2 seconds
+            setTimeout(() => {
+                btn.textContent = '💾 Save to Preset';
+            }, 2000);
+        }
+    }
+
+    /**
+     * Reset code - load a preset or default code
+     * IMPORTANT: This loads code TEMPORARILY. Click Save to persist!
+     */
+    async resetCode() {
+        const presets = await this.loadPresets();
+
+        if (presets.length === 0) {
+            // Fallback to hardcoded default if no presets available
+            if (confirm('Load default code? (Click Save to persist)\n\nThis will overwrite your editor.')) {
+                this.editor.setValue(this.DEFAULT_CODE);
+                this.currentPreset = null;
+                const select = document.getElementById('presetSelect');
+                if (select) select.value = '';
+                this.log('✓ Default code loaded (not saved - click Save to keep it)', 'info');
+            }
+            return;
+        }
+
+        // Show preset selection dialog
+        const presetNames = presets.map(p => p.name).sort();
+        const presetList = presetNames.join('\n');
+        const selected = prompt(
+            `Select a preset to load:\n\n${presetList}\n\nOr cancel to use default code\n\n(Click Save to persist)`,
+            presetNames[0]
+        );
+
+        if (selected) {
+            await this.loadPreset(selected);
+        } else if (selected === '') {
+            // User clicked OK but left it empty - load default
+            if (confirm('Load default code? (Click Save to persist)')) {
+                this.editor.setValue(this.DEFAULT_CODE);
+                this.currentPreset = null;
+                const select = document.getElementById('presetSelect');
+                if (select) select.value = '';
+                this.log('✓ Default code loaded (not saved - click Save to keep it)', 'info');
+            }
+        }
+        // If cancel (null), do nothing
     }
 
     /**

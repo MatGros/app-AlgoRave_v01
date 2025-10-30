@@ -18,7 +18,7 @@ class SampleLibrary {
             drums: {
                 'bd': { folder: 'kicks', count: 5, aliases: ['kick'] },
                 'sd': { folder: 'snares', count: 3, aliases: ['snare'] },
-                'hh': { folder: 'hats', count: 3, aliases: ['hat', 'hihat'] },
+                'hh': { folder: 'hats', count: 3, aliases: ['hat'] },
                 'bass': { folder: 'bass', count: 5, aliases: ['bass'] }
             },
             // Custom samples (add your own here!)
@@ -82,26 +82,22 @@ class SampleLibrary {
     }
 
     /**
-     * Initialize player pool (10 players per sample for polyphony)
+     * Initialize player pool (32 players for robust polyphony)
+     * NOTE: Players are NOT connected to any destination here
+     * They will be connected to per-event effect chains when played
+     *
+     * Pool size: 32 allows:
+     * - 8 simultaneous samples per slot (drums, bass, etc.)
+     * - Good safety margin for busy patterns
+     * - No memory bloat (Tone.js Player is lightweight)
      */
     initPlayerPool() {
         try {
-            for (let i = 0; i < 10; i++) {
+            const POOL_SIZE = 32; // Increased from 10 for better polyphony
+
+            for (let i = 0; i < POOL_SIZE; i++) {
                 const player = new Tone.Player();
-                
-                // Route through master bus or destination
-                // Wrap in try/catch in case context isn't ready yet
-                try {
-                    if (window.masterBus && typeof window.masterBus.getInput === 'function') {
-                        player.connect(window.masterBus.getInput());
-                    } else {
-                        player.toDestination();
-                    }
-                } catch (e) {
-                    console.warn('Could not connect player to destination (context may not be ready yet):', e.message);
-                    // Player will be connected later when context is ready
-                }
-                
+                // Don't connect to anything - will be routed through effect chains
                 this.playerPool.push(player);
             }
             console.log(`✓ Player pool initialized: ${this.playerPool.length} reusable players`);
@@ -121,7 +117,8 @@ class SampleLibrary {
     }
 
     /**
-     * Load numbered drum samples (bd0-bd9, sd0-sd9, etc.)
+     * Load numbered drum samples (bd1-bd9, sd1-sd9, etc.)
+     * NOTE: Sample files use 1-based indexing (kick1.wav, kick2.wav, etc.)
      */
     async loadDrumSamples() {
         console.log('  Loading drum samples from folders...');
@@ -129,10 +126,10 @@ class SampleLibrary {
 
         for (const [drumName, config] of Object.entries(this.sampleConfig.drums)) {
             console.log(`  Scanning: ${config.folder}/ for ${drumName} variations...`);
-            
-            // Try loading numbered variations (kick0, kick1, etc.)
-            for (let i = 0; i < config.count; i++) {
-                // Try with aliases first (kick0, snare0, etc.) - these are more likely to exist
+
+            // Try loading numbered variations (kick1, kick2, etc. - 1-based indexing)
+            for (let i = 1; i <= config.count; i++) {
+                // Try with aliases first (kick1, snare1, etc.) - these are more likely to exist
                 for (const alias of config.aliases) {
                     const aliasName = `${alias}${i}`;
                     // Only try .wav files (that's what actually exists)
@@ -229,16 +226,26 @@ class SampleLibrary {
     }
 
     /**
-     * Play a sample using pooled player
+     * Play a sample using pooled player with per-event effect chain
      * @param {string} name - Sample name
      * @param {number} time - When to play (Tone.js time)
-     * @param {number} gain - Volume (0-2, default 1.0)
+     * @param {Object|number} effects - Effect settings OR gain value for backward compatibility
+     *        {gain: 1.0, room: 0, delay: 0, lpf: null, hpf: null, pan: 0.5}
      */
-    play(name, time = '+0', gain = 1.0) {
+    play(name, time = '+0', effects = {gain: 1.0}) {
         if (!this.loaded) {
             console.warn('SampleLibrary not loaded yet');
             return;
         }
+
+        // Backward compatibility: if effects is a number, treat it as gain
+        if (typeof effects === 'number') {
+            effects = { gain: effects };
+        }
+
+        // Ensure effects object has defaults
+        if (!effects) effects = {};
+        effects.gain = effects.gain !== undefined ? effects.gain : 1.0;
 
         const lowerName = name.toLowerCase();
 
@@ -247,27 +254,54 @@ class SampleLibrary {
             try {
                 const buffer = this.samples[lowerName];
                 const player = this.getPoolPlayer();
-                
-                // Ensure player is connected (may not be if context wasn't ready at init)
+
+                // Stop the player first in case it's still playing from pool reuse
+                // This prevents "Start time must be strictly greater than previous start time" error
                 try {
-                    if (!player.destination || player.destination.type === undefined) {
-                        // Player not connected, connect now
-                        if (window.masterBus && typeof window.masterBus.getInput === 'function') {
-                            player.connect(window.masterBus.getInput());
-                        } else {
-                            player.toDestination();
-                        }
-                    }
+                    player.stop();
                 } catch (e) {
-                    // Silently handle connection errors
+                    // Ignore stop errors - player may not be playing
                 }
-                
-                // Set buffer and gain
+
+                // Disconnect player from any previous connections
+                if (player.connected) {
+                    try {
+                        player.disconnect();
+                    } catch (e) {
+                        // Ignore disconnect errors
+                    }
+                }
+
+                // Set buffer
                 player.buffer = buffer;
-                player.volume.value = Tone.gainToDb(gain);
-                
+
+                // Create per-event effect chain
+                const effectChain = window.effectsEngine.createEffectChain(effects, player);
+
+                // Connect effect chain to master bus
+                if (window.masterBus && typeof window.masterBus.getInput === 'function') {
+                    effectChain.connect(window.masterBus.getInput());
+                } else {
+                    effectChain.toDestination();
+                }
+
                 // Schedule and start playback
                 player.start(time);
+
+                // Cleanup after playback using player's onstop callback
+                // This is more reliable than setTimeout and doesn't block the audio thread
+                const originalOnStop = player.onstop;
+                player.onstop = () => {
+                    // Call original if it existed
+                    if (originalOnStop) originalOnStop.call(player);
+
+                    // Cleanup effect chain - NOW DISPOSES ALL NODES PROPERLY
+                    try {
+                        effectChain.dispose();  // This now disposes ALL effect nodes, not just disconnects
+                    } catch (e) {
+                        // Ignore cleanup errors
+                    }
+                };
 
                 return;
             } catch (e) {
@@ -275,24 +309,32 @@ class SampleLibrary {
             }
         }
 
-        // Fallback to synthesized drums
-        this.fallbackToSynth(lowerName, time, gain);
+        // Fallback to synthesized drums (pass duration for proper timing)
+        const duration = effects._duration || 0.1; // Default fallback
+        this.fallbackToSynth(lowerName, time, effects, duration);
     }
 
     /**
      * Fallback to synthesized drum when sample not found or not loaded
+     * @param {string} lowerName - Sample name (e.g., "hh", "bd", "kick1")
+     * @param {number} time - When to play (Tone.js time)
+     * @param {Object} effects - Effect settings including gain, room, delay, etc.
+     * @param {number} duration - Duration for this event (in seconds) - controls timing
      */
-    fallbackToSynth(lowerName, time, gain) {
+    fallbackToSynth(lowerName, time, effects, duration) {
         const drumType = this.synthFallback[lowerName];
         if (drumType) {
-            window.synthEngine.playDrum(drumType, time, gain);
+            // DEBUG: Log when falling back to synth
+            console.log(`[Fallback] ${lowerName} -> synth ${drumType} with effects:`, effects);
+            window.synthEngine.playDrum(drumType, time, effects, duration);
         } else {
             // Try to extract base drum name (e.g., kick0 -> kick)
             const baseName = lowerName.replace(/\d+$/, '');
             const baseDrumType = this.synthFallback[baseName];
 
             if (baseDrumType) {
-                window.synthEngine.playDrum(baseDrumType, time, gain);
+                console.log(`[Fallback] ${lowerName} -> synth ${baseDrumType} (from base name)`);
+                window.synthEngine.playDrum(baseDrumType, time, effects, duration);
             } else {
                 console.warn(`Sample not found and no synth fallback: ${lowerName}`);
             }

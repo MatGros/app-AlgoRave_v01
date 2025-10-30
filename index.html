@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MusicAlgoCoding - Live Coding Music for Fun and Learning</title>
+    <title>ALGORAVE - Live Coding Music for Fun and Learning</title>
 
     <!-- CodeMirror CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
@@ -17,7 +17,7 @@
         <!-- Header -->
         <header class="header">
             <div class="header-left">
-                <h1 class="logo">▶ MusicAlgoCoding</h1>
+                <h1 class="logo">▶ ALGORAVE</h1>
                 <span class="tagline">live coding music for fun and learning</span>
             </div>
             <div class="header-right">
@@ -43,7 +43,13 @@
             <div class="editor-container">
                 <div class="editor-toolbar">
                     <span class="help-text">Ctrl+Enter: evaluate line or selection | Ctrl+.: stop selected lines | Ctrl+Space: autocomplete</span>
-                    <button id="resetCodeBtn" class="btn-reset" title="Restore default code">Reset Code</button>
+                    <div class="toolbar-buttons">
+                        <button id="savePresetBtn" class="btn-save-preset" title="Save code to currently loaded preset">💾 Save to Preset</button>
+                        <select id="presetSelect" class="btn-preset" title="Load a preset">
+                            <option value="">Load Preset...</option>
+                        </select>
+                        <button id="resetCodeBtn" class="btn-reset" title="Show all presets or restore default">Reset Code</button>
+                    </div>
                 </div>
                 <textarea id="codeEditor">// PSYCHEDELIC PROGRESSIVE - 135 BPM 🎵🎵
 // 1. Click START first!
@@ -276,7 +282,7 @@ d6(silence())
                 <button id="clearConsole" class="btn-clear">Clear</button>
             </div>
             <div id="consoleOutput" class="console-output">
-                <div class="console-line success">✓ MusicAlgoCoding engine loaded</div>
+                <div class="console-line success">✓ AlgoRave engine loaded</div>
                 <div class="console-line info">♪ Ready to code music...</div>
             </div>
         </div>
@@ -286,7 +292,7 @@ d6(silence())
     <div id="helpModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>MusicAlgoCoding - Help & Examples</h2>
+                <h2>ALGORAVE - Help & Examples</h2>
                 <button class="modal-close" id="closeHelpBtn">&times;</button>
             </div>
             <div class="modal-body">

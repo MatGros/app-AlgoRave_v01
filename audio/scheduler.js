@@ -99,7 +99,9 @@ class PatternScheduler {
      */
     schedulePattern(pattern, time, cycleNumber) {
         const events = pattern.getEventsForCycle(cycleNumber);
-        const gain = pattern.effects.gain || 1.0;
+
+        // Pass the complete effects object (including gain, room, delay, lpf, hpf, pan)
+        const effects = pattern.effects || { gain: 1.0 };
 
         // Calculate exact timing for each event within the cycle
         // At 135 BPM: 1 beat = 0.444s, so event.time (0-1) maps to 0-1.778s
@@ -113,10 +115,12 @@ class PatternScheduler {
             const duration = event.duration * cycleDuration; // in seconds
 
             if (pattern.type === 'sound') {
-                // Play sample/drum with gain
-                window.sampleLibrary.play(event.sound, eventTime, gain);
+                // Play sample/drum with complete effects and duration for timing
+                // Store duration in effects object for fallback synths
+                const effectsWithDuration = { ...effects, _duration: duration };
+                window.sampleLibrary.play(event.sound, eventTime, effectsWithDuration);
             } else if (pattern.type === 'note') {
-                // Play note with synth
+                // Play note with synth and complete effects
                 const synthType = pattern.synthType || 'sawtooth';
                 const midiNote = typeof event.sound === 'number'
                     ? event.sound
@@ -127,7 +131,7 @@ class PatternScheduler {
                     synthType,
                     eventTime,
                     duration + 's',
-                    gain
+                    effects
                 );
             }
         });

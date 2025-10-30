@@ -1,0 +1,75 @@
+// AMBIENT / CHILL - 90 BPM 🎵
+// Atmospheric, spacious, and meditative soundscape
+
+// Minimal kick pattern
+d1(s("bd ~ ~ bd ~ bd ~ ~").gain(0.7).room(0.3))
+
+// Deep ambient bass
+d2(note("c2 ~ ~ ~ eb2 ~ ~ ~ g2 ~ ~ ~ eb2 ~ ~ ~").s("sine").lpf(400).gain(0.6).room(0.5))
+
+// Floating pad texture
+d3(note("c3 eb3 g3 bb3").s("sine").room(0.9).gain(0.3).slow(4))
+
+// Gentle hi-hats in background
+d4(s("hh ~ ~ hh ~ hh ~ ~").gain(0.25).room(0.6).pan(0.6))
+
+// ====== AMBIENT TEXTURE LAYERS ======
+
+// Add ethereal synth layer
+d5(note("c4 ~ g4 ~ eb4 ~ bb4 ~").s("fm").room(0.8).delay(0.4).gain(0.2).slow(2))
+
+// Reverb-heavy strings
+d6(note("eb3 ~ g3 ~ bb3 ~").s("triangle").room(0.95).gain(0.25).slow(3))
+
+// ====== BUILD ATMOSPHERE ======
+
+// Intensify the bass pad
+d2(note("c2 ~ ~ ~ eb2 ~ ~ ~ g2 ~ ~ ~ eb2 ~ ~ ~").s("sine").lpf(500).gain(0.65).room(0.6))
+
+// Add more reverb texture
+d3(note("c3 eb3 g3 bb3").s("sine").room(0.95).gain(0.35).slow(4))
+
+// Increase synth presence
+d5(note("c4 ~ g4 ~ eb4 ~ bb4 ~").s("fm").room(0.9).delay(0.5).gain(0.25).slow(2))
+
+// Add pad movement
+d6(note("eb3 ~ g3 ~ bb3 ~ c4 ~").s("triangle").room(0.95).gain(0.3).slow(2))
+
+// ====== PEAK ATMOSPHERE ======
+
+// Full ambient wash
+d1(s("bd ~ ~ bd ~ bd ~ ~").gain(0.75).room(0.4))
+d2(note("c2 ~ ~ ~ eb2 ~ ~ ~ g2 ~ ~ ~ bb2 ~ ~ ~").s("sine").lpf(450).gain(0.7).room(0.7))
+d3(note("c3 eb3 g3 bb3").s("sine").room(0.95).gain(0.4).slow(4))
+d4(s("hh ~ ~ hh ~ hh ~ ~").gain(0.3).room(0.7).pan(0.6))
+d5(note("c4 ~ g4 ~ eb4 ~ bb4 ~").s("fm").room(0.9).delay(0.5).gain(0.3).slow(2))
+d6(note("eb3 ~ g3 ~ bb3 ~ c4 ~").s("triangle").room(0.95).gain(0.35).slow(2))
+
+// Soft ambient effects
+masterReverb(0.7)
+masterDelay(0.3)
+
+// ====== WIND DOWN ======
+
+// Gradually reduce activity
+d1(silence())
+d4(silence())
+
+// Minimal textures remain
+d2(note("c2 ~ ~ ~ ~ ~ ~ ~").s("sine").lpf(300).gain(0.5).room(0.6))
+d3(note("c3 eb3 g3 bb3").s("sine").room(0.95).gain(0.3).slow(6))
+d5(note("c4 ~ ~ ~ g4 ~ ~ ~").s("fm").room(0.9).delay(0.5).gain(0.2).slow(3))
+d6(note("eb3 ~ ~ ~ bb3 ~ ~ ~").s("sine").room(0.95).gain(0.25).slow(4))
+
+// Final minimal phase
+d2(note("c2 ~ ~ ~").s("sine").lpf(250).gain(0.4).room(0.8).slow(2))
+d3(note("c3 eb3 g3 bb3").s("sine").room(0.95).gain(0.25).slow(8))
+d5(note("c4").s("sine").room(0.9).delay(0.5).gain(0.15).slow(4))
+
+// Fadeout
+masterVolume(0.5)
+
+// Stop
+hush()
+masterReset()
+masterVolume(0.8)

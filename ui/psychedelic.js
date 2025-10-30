@@ -14,7 +14,11 @@ class PsychedelicVisuals {
         this.scale = 1;
         this.animationFrame = null;
         this.isRunning = false;
-        
+
+        // Audio-reactive state (MUST be initialized before animation)
+        this.audioLevel = 0; // 0-1, updated from audio analyzer
+        this.beatPulse = 0;  // 0-1, triggered on beat
+
         // Color palette (psychedelic) - MUST be before initParticles
         this.colors = [
             '#00FF88', // Green (accent)
@@ -24,17 +28,14 @@ class PsychedelicVisuals {
             '#8800FF', // Purple
             '#FFFF00', // Yellow
         ];
-        
+
         // Visual parameters
         this.spiralCount = 8;
         this.particleCount = 50;
         this.particles = [];
-        
+
         // Initialize particles
         this.initParticles();
-        
-        this.animationFrame = null;
-        this.isRunning = false;
     }
 
     /**

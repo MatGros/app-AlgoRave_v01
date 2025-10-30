@@ -1,0 +1,70 @@
+// DRUM AND BASS / JUNGLE - 170 BPM 🎵
+// Fast-paced neurological drum and bass
+
+// DnB breakbeat (kick + snare combo)
+d1(s("bd ~ ~ ~ ~ ~ sd ~").gain(0.85))
+
+// Fast rolling hi-hats (double time feel)
+d2(s("hh*16").gain(0.3).pan(0.6))
+
+// Reese bass (complex sub-bass)
+d3(note("c1 ~ c1 d1 ~ eb1 ~ d1").s("sawtooth").lpf(600).gain(0.7).room(0.1))
+
+// Complex bassline pattern
+d4(note("c1 ~ c1 ~ eb1 ~ d1 ~").s("triangle").lpf(400).gain(0.65))
+
+// ====== BUILD INTENSITY ======
+
+// Add hi-hat variations
+d2(s("hh*16").every(4, fast(1.5)).gain(0.35).pan(0.65))
+
+// Snare rolls for intensity
+d5(s("~ ~ sd sd ~ sd sd ~").gain(0.5).room(0.2))
+
+// Atmospheric pad
+d6(note("c3 eb3 g3").s("sine").room(0.7).slow(2).gain(0.3))
+
+// ====== PEAK ENERGY ======
+
+// Aggressive breakbeat
+d1(s("bd ~ ~ ~ ~ sd ~ bd").gain(0.9))
+
+// Ultra-fast hi-hats
+d2(s("hh*16").gain(0.35).pan(0.6).sometimes(fast(2)))
+
+// Deep neuro-bass
+d3(note("c1 c1 d1 eb1 c1 d1 f1 eb1").s("sawtooth").lpf(700).gain(0.8).room(0.05))
+
+// Mid-range bass counter-melody
+d4(note("c2 ~ eb2 ~ g2 ~ eb2 ~").s("square").lpf(1500).gain(0.6))
+
+// High-pitched synth stab
+d7(note("c4 eb4 g4").s("fm").gain(0.4).room(0.4).pan(0.4))
+
+// ====== LIQUID SECTION (contrast) ======
+
+// Drop to liquid feel - slower breakbeat
+d1(s("bd ~ sd bd ~ sd*2 bd ~").gain(0.8))
+
+// Smoother hi-hats
+d2(s("hh*8").gain(0.25).room(0.3))
+
+// Liquid bassline
+d3(note("c2 ~ eb2 ~ g2 ~ eb2 ~ bb2 ~ g2 ~").s("sine").lpf(800).gain(0.65).room(0.3))
+
+// Atmospheric pad
+d6(note("c3 eb3 g3 bb3").s("sine").room(0.8).slow(2).gain(0.35))
+
+// ====== FINAL BUILD ======
+
+// Back to aggressive feel
+d1(s("bd ~ ~ ~ ~ ~ sd ~").gain(0.85))
+d2(s("hh*16").gain(0.3).pan(0.6))
+d3(note("c1 ~ c1 d1 ~ eb1 ~ d1").s("sawtooth").lpf(600).gain(0.75))
+d4(note("c1 ~ c1 ~ eb1 ~ d1 ~").s("triangle").lpf(400).gain(0.65))
+d5(s("~ ~ sd sd ~ sd sd ~").gain(0.5))
+d7(note("c4 eb4 g4").s("fm").gain(0.4))
+
+// Stop
+hush()
+masterReset()

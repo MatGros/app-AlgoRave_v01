@@ -3,32 +3,37 @@ setlocal enabledelayedexpansion
 
 cd /d "%~dp0"
 
-REM Find a free port starting from 8000
-set PORT=8000
-set FOUND=0
-
-for /L %%i in (0,1,100) do (
-    set /a CURRENT_PORT=8000+%%i
-    netstat -ano | find "LISTENING" | find ":!CURRENT_PORT! " >nul
-    if errorlevel 1 (
-        set PORT=!CURRENT_PORT!
-        set FOUND=1
-        goto :found_port
-    )
-)
-
-:found_port
-if %FOUND%==1 (
+REM Check if Node.js is installed
+where node >nul 2>nul
+if %ERRORLEVEL% NEQ 0 (
     echo.
     echo ====================================
-    echo  AlgoRave Server
+    echo  ERROR: Node.js not found
     echo ====================================
-    echo Starting on http://localhost:%PORT%
-    echo Press Ctrl+C to stop
-    echo ====================================
+    echo Please install Node.js from: https://nodejs.org/
     echo.
-    python -m http.server %PORT%
-) else (
-    echo Error: Could not find a free port between 8000-8100
     pause
+    exit /b 1
 )
+
+REM Check if npm dependencies are installed
+if not exist "node_modules" (
+    echo.
+    echo ====================================
+    echo  Installing dependencies...
+    echo ====================================
+    echo.
+    call npm install
+)
+
+REM Start the server
+echo.
+echo ====================================
+echo  AlgoRave Server
+echo ====================================
+echo Starting on http://localhost:8000
+echo Press Ctrl+C to stop
+echo ====================================
+echo.
+
+node server.js
