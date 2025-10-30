@@ -146,12 +146,42 @@ d6(silence())`;
 
         // Set up keyboard shortcuts
         this.editor.setOption('extraKeys', {
-            'Ctrl-Enter': () => this.evaluateCurrentLine(),
-            'Cmd-Enter': () => this.evaluateCurrentLine(),
-            'Ctrl-Shift-Enter': () => this.evaluateAll(),
-            'Cmd-Shift-Enter': () => this.evaluateAll(),
-            'Ctrl-.': () => this.stop(),
-            'Cmd-.': () => this.stop()
+            'Ctrl-Enter': (cm) => {
+                this.evaluateCurrentLine();
+                return true;
+            },
+            'Cmd-Enter': (cm) => {
+                this.evaluateCurrentLine();
+                return true;
+            },
+            'Ctrl-Shift-Enter': (cm) => {
+                this.evaluateSelection();
+                return true;
+            },
+            'Cmd-Shift-Enter': (cm) => {
+                this.evaluateSelection();
+                return true;
+            },
+            'Ctrl-.': (cm) => {
+                this.stopCurrentSlot();
+                return true;
+            },
+            'Cmd-.': (cm) => {
+                this.stopCurrentSlot();
+                return true;
+            }
+        });
+        
+        // Additional global keyboard handler
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Enter') {
+                e.preventDefault();
+                this.evaluateSelection();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === '.') {
+                e.preventDefault();
+                this.stopCurrentSlot();
+            }
         });
 
         // Auto-save code on changes
@@ -309,6 +339,112 @@ d6(silence())`;
         // Auto-start if not playing
         if (!window.scheduler.isPlaying && successCount > 0) {
             this.start();
+        }
+    }
+
+    /**
+     * Evaluate only selected lines
+     */
+    evaluateSelection() {
+        let lines = [];
+        let isSelection = false;
+
+        // Check if there's a selection
+        if (this.editor.somethingSelected()) {
+            const selection = this.editor.getSelection();
+            lines = selection.split('\n').filter(line => line.trim().length > 0);
+            isSelection = true;
+            this.log(`Evaluating ${lines.length} selected line(s)...`, 'info');
+        } else {
+            // If no selection, use all code (like evaluateAll)
+            const code = this.editor.getValue();
+            lines = code.split('\n').filter(line => line.trim().length > 0);
+            this.log('No selection - evaluating all code...', 'info');
+        }
+
+        let successCount = 0;
+        let errorCount = 0;
+
+        lines.forEach((line) => {
+            // Skip comments
+            if (line.trim().startsWith('//')) {
+                return;
+            }
+
+            const result = window.codeEvaluator.evaluate(line);
+            if (result.success) {
+                successCount++;
+                this.log(`✓ ${line.trim().substring(0, 60)}`, 'success');
+            } else {
+                errorCount++;
+                this.log(`✗ ${result.message}`, 'error');
+            }
+        });
+
+        const suffix = isSelection ? ' (selected)' : ' (all)';
+        this.log(`✓ ${successCount} patterns, ✗ ${errorCount} errors${suffix}`, successCount > errorCount ? 'success' : 'warning');
+
+        // Auto-start if not playing
+        if (!window.scheduler.isPlaying && successCount > 0) {
+            this.start();
+        }
+    }
+
+    /**
+     * Stop only the current slot (extracted from line)
+     */
+    stopCurrentSlot() {
+        let lines = [];
+
+        // Check if there's a selection
+        if (this.editor.somethingSelected()) {
+            const selection = this.editor.getSelection();
+            lines = selection.split('\n');
+        } else {
+            // Get current line
+            const cursor = this.editor.getCursor();
+            const code = this.editor.getLine(cursor.line);
+            lines = [code];
+        }
+
+        let stoppedSlots = [];
+        let errorCount = 0;
+
+        lines.forEach((line) => {
+            if (!line.trim() || line.trim().startsWith('//')) {
+                return; // Skip empty lines and comments
+            }
+
+            // Extract slot number (d1, d2, etc.)
+            const slotMatch = line.match(/d(\d)/);
+            
+            if (!slotMatch) {
+                errorCount++;
+                return;
+            }
+
+            const slotNumber = parseInt(slotMatch[1]);
+            const slotId = `d${slotNumber}`;
+            
+            // Avoid stopping the same slot multiple times
+            if (stoppedSlots.includes(slotId)) {
+                return;
+            }
+
+            // Silence the specific slot
+            const result = window.codeEvaluator.evaluate(`${slotId}(silence())`);
+            
+            if (result.success) {
+                stoppedSlots.push(slotId);
+            } else {
+                errorCount++;
+            }
+        });
+
+        if (stoppedSlots.length > 0) {
+            this.log(`⏹ Stopped slots: ${stoppedSlots.join(', ')}`, 'info');
+        } else {
+            this.log('❌ No slots found to stop', 'warning');
         }
     }
 

@@ -244,8 +244,17 @@ body {
     letter-spacing: 1px;
 }
 
-#timeline, #scope {
+#timeline {
     width: 100%;
+    height: 200px !important;
+    background: var(--bg-darker);
+    border: 1px solid var(--border-color);
+    flex-grow: 2;
+}
+
+#scope {
+    width: 100%;
+    height: 100px !important;
     background: var(--bg-darker);
     border: 1px solid var(--border-color);
 }
@@ -254,15 +263,15 @@ body {
     display: flex;
     flex-direction: column;
     gap: 5px;
-    max-height: 200px;
+    max-height: 120px;
     overflow-y: auto;
 }
 
 .pattern-item {
-    padding: 8px 10px;
+    padding: 6px 8px;
     background: var(--bg-darker);
     border-left: 3px solid var(--accent-green);
-    font-size: 0.85em;
+    font-size: 0.8em;
     font-family: 'Courier New', monospace;
 }
 
@@ -272,15 +281,18 @@ body {
 }
 
 .reference {
-    font-size: 0.8em;
-    line-height: 1.8;
+    font-size: 0.7em;
+    line-height: 1.6;
+    max-height: 120px;
+    overflow-y: auto;
 }
 
 .reference code {
     color: var(--accent-green);
     background: var(--bg-darker);
-    padding: 2px 6px;
+    padding: 1px 4px;
     border-radius: 2px;
+    font-size: 0.9em;
 }
 
 /* ===== CONSOLE ===== */

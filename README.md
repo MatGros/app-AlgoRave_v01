@@ -210,9 +210,9 @@ d2(silence())
 
 ## Keyboard Shortcuts
 
-- **Ctrl+Enter** (or Cmd+Enter) - Evaluate current line
-- **Ctrl+Shift+Enter** - Evaluate all code
-- **Ctrl+.** - Stop playback (stops transport and clears patterns)
+- **Ctrl+Enter** (or Cmd+Enter) - Evaluate current line or selection
+- **Ctrl+Shift+Enter** - Evaluate selected lines (or all if nothing selected)
+- **Ctrl+.** - Stop current slot only (extracts slot from line, e.g., d1, d2, etc.)
 
 ## Sound Library
 

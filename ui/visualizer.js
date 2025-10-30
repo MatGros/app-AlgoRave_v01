@@ -99,7 +99,13 @@ class Visualizer {
             ctx.fillRect(x - 1, 0, 2, height - 10);
         }
 
-        // Draw pattern events
+        // Color palette for slots
+        const slotColors = [
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', 
+            '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B'
+        ];
+
+        // Draw pattern events with slot labels
         const patterns = window.scheduler.patterns;
         let yOffset = 5;
 
@@ -109,15 +115,41 @@ class Visualizer {
                 return;
             }
 
+            // Extract slot number from id (d1, d2, etc.)
+            const slotMatch = id.match(/d(\d)/);
+            const slotNumber = slotMatch ? parseInt(slotMatch[1]) : 0;
+            const slotColor = slotColors[(slotNumber - 1) % slotColors.length];
+
             const events = pattern.getEventsForCycle(window.scheduler.currentCycle);
 
+            // Draw slot background
+            ctx.fillStyle = slotColor + '20'; // Semi-transparent
+            ctx.fillRect(0, yOffset, width, 10);
+
+            // Draw events
             events.forEach(event => {
                 const x = event.time * width;
                 const w = event.duration * width;
 
-                ctx.fillStyle = pattern.type === 'sound' ? '#00ff88' : '#ff0088';
-                ctx.fillRect(x, yOffset, Math.max(2, w), 8);
+                ctx.fillStyle = slotColor;
+                ctx.fillRect(x, yOffset, Math.max(2, w), 10);
+
+                // Add border
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 0.5;
+                ctx.strokeRect(x, yOffset, Math.max(2, w), 10);
             });
+
+            // Draw slot label on left border with background
+            // Background rectangle for label
+            ctx.fillStyle = slotColor;
+            ctx.fillRect(0, yOffset, 30, 12);
+            
+            // Label text
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 11px Consolas';
+            ctx.textAlign = 'center';
+            ctx.fillText(id, 15, yOffset + 8);
 
             yOffset += 12;
             if (yOffset > height - 20) yOffset = 5;

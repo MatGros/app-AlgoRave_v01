@@ -41,7 +41,7 @@
         <main class="main-content">
             <div class="editor-container">
                 <div class="editor-toolbar">
-                    <span class="help-text">Ctrl+Enter: evaluate line | Ctrl+Shift+Enter: evaluate all | Ctrl+.: stop</span>
+                    <span class="help-text">Ctrl+Enter: evaluate single line | Ctrl+Shift+Enter: evaluate selected lines | Ctrl+.: stop selected lines</span>
                     <button id="resetCodeBtn" class="btn-reset" title="Restore default code">Reset Code</button>
                 </div>
                 <textarea id="codeEditor">// PSYCHEDELIC PROGRESSIVE - 138 BPM ��🎵
@@ -173,12 +173,12 @@ d6(silence())
             <aside class="viz-panel">
                 <div class="panel-section">
                     <h3>Pattern Timeline</h3>
-                    <canvas id="timeline" width="300" height="80"></canvas>
+                    <canvas id="timeline" width="450" height="200"></canvas>
                 </div>
 
                 <div class="panel-section">
                     <h3>Oscilloscope</h3>
-                    <canvas id="scope" width="300" height="100"></canvas>
+                    <canvas id="scope" width="450" height="100"></canvas>
                 </div>
 
                 <div class="panel-section">

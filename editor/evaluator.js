@@ -6,8 +6,25 @@
 class CodeEvaluator {
     constructor() {
         this.patternCounter = 0;
+        this.currentSlotIndex = 0; // Track next available slot
         // Pattern slots like TidalCycles (d1, d2, d3, etc.)
         this.slots = {};
+    }
+
+    /**
+     * Get the next available slot
+     */
+    getNextAvailableSlot() {
+        // Try to find first empty slot (d1 to d9)
+        for (let i = 1; i <= 9; i++) {
+            const slotName = `d${i}`;
+            if (!this.slots[slotName]) {
+                return slotName;
+            }
+        }
+        // If all slots are full, use current pointer (round-robin)
+        this.currentSlotIndex = (this.currentSlotIndex % 9) + 1;
+        return `d${this.currentSlotIndex}`;
     }
 
     /**
@@ -45,16 +62,25 @@ class CodeEvaluator {
                 return result;
             }
 
-            // Legacy: If result is a pattern without slot, warn user
+            // If result is a pattern without slot, auto-assign to next available slot
             if (result instanceof Pattern) {
+                const autoSlot = this.getNextAvailableSlot();
+                window.scheduler.setPattern(autoSlot, result);
+                this.slots[autoSlot] = result;
                 return {
-                    success: false,
-                    message: '✗ Use slots! Example: d1(s("bd sd")) instead of s("bd sd")'
+                    success: true,
+                    message: `✓ Auto-assigned to ${autoSlot}: ${result.toString()}`,
+                    result
                 };
             } else if (Array.isArray(result)) {
+                const autoSlot = this.getNextAvailableSlot();
+                const stackedPattern = new Pattern(result, 'stacked');
+                window.scheduler.setPattern(autoSlot, stackedPattern);
+                this.slots[autoSlot] = stackedPattern;
                 return {
-                    success: false,
-                    message: '✗ Use slots! Example: d1(stack(...))'
+                    success: true,
+                    message: `✓ Auto-assigned stacked pattern to ${autoSlot}`,
+                    result
                 };
             }
 
