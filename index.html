@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALGORAVE - Live Coding Music</title>
+
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1 class="logo">▶ ALGORAVE</h1>
+                <span class="tagline">live coding music</span>
+            </div>
+            <div class="header-right">
+                <div class="bpm-control">
+                    <label>BPM</label>
+                    <input type="number" id="bpmInput" value="135" min="60" max="200" step="1">
+                </div>
+                <div class="transport-controls">
+                    <button id="startBtn" class="btn btn-start">START</button>
+                    <button id="stopBtn" class="btn btn-stop">STOP</button>
+                </div>
+                <button id="helpBtn" class="btn btn-help">HELP</button>
+                <div class="status">
+                    <span id="statusText">ready</span>
+                    <span id="cycleCount">cycle: 0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Editor Area -->
+        <main class="main-content">
+            <div class="editor-container">
+                <div class="editor-toolbar">
+                    <span class="help-text">Ctrl+Enter: evaluate line | Ctrl+Shift+Enter: evaluate all | Ctrl+.: stop</span>
+                    <button id="resetCodeBtn" class="btn-reset" title="Restore default code">Reset Code</button>
+                </div>
+                <textarea id="codeEditor">// PSYCHEDELIC PROGRESSIVE - 138 BPM ��🎵
+// 1. Click START first!
+// 2. Press Ctrl+Enter on each line to build the track
+// 3. Modify and re-evaluate to change patterns live!
+
+// ====== MINIMAL INTRO - Build up slowly ======
+
+// Powerful kick (loud and centered)
+d1(s("bd*4").gain(0.85))
+
+// Deep rolling bassline (FM synthesis magic)
+d2(note("c1 ~ c1 ~ d1 ~ c1 ~ eb1 ~ c1 ~ d1 ~ f1 ~").s("fm").gain(0.5).lpf(700))
+
+// Soft hi-hats background (panned right)
+d3(s("hh*8").gain(0.25).pan(0.7))
+
+// ====== ADD ENERGY - Progressive layers ======
+
+// Faster hi-hats with variations (16th notes)
+d3(s("hh*16").gain(0.3).pan(0.6).every(4, fast(2)))
+
+// Trippy lead melody (psychedelic scales)
+d4(note("c3 eb3 f3 g3 bb3 c4 bb3 g3").s("fm").gain(0.4).room(0.5).delay(0.25).pan(0.3))
+
+// Off-beat claps (spatial movement)
+d5(s("~ cp ~ ~ ~ cp ~ oh").gain(0.5).room(0.4))
+
+// ====== FULL POWER - Peak time! ======
+
+// Complex bassline (rolling triplets feel)
+d2(note("c1 c1 d1 eb1 c1 d1 eb1 f1 c1 c1 eb1 d1 c1 eb1 f1 g1").s("fm").gain(0.55).lpf(650).room(0.15))
+
+// High-energy acid lead (panned left)
+d4(note("c4 eb4 f4 g4 bb4 c5 g4 f4").s("fm").gain(0.35).room(0.6).delay(0.3).pan(0.2))
+
+// Snare on 2 and 4 (medium volume)
+d6(s("~ ~ sd ~ ~ ~ sd ~").gain(0.6).room(0.3))
+
+// Percussive accents (occasional)
+d7(s("~ ~ ~ oh ~ ~ cp ~").gain(0.45).pan(0.8))
+
+// ====== BREAKDOWN - Atmospheric ======
+
+// Keep only kick + deep bass
+d1(s("bd*4").gain(0.8))
+d2(note("c1 ~ ~ ~ eb1 ~ ~ ~").s("fm").gain(0.45).lpf(500).room(0.4))
+d3(silence())
+d4(silence())
+d5(silence())
+d6(silence())
+d7(silence())
+
+// Add ambient pad slowly
+d8(note("c3 eb3 g3 bb3").s("sine").gain(0.3).room(0.9).slow(2))
+
+// Build tension with faster hi-hats
+d3(s("hh*8").gain(0.2).pan(0.5).fast(2))
+
+// ====== CLIMAX - Maximum energy! ======
+
+// Powerful kick
+d1(s("bd*4").gain(0.9))
+
+// Insane rolling bassline
+d2(note("c1 c1 d1 eb1 c1 d1 f1 eb1 c1 d1 eb1 f1 g1 f1 eb1 d1").s("fm").gain(0.6).lpf(700).room(0.2))
+
+// Ultra-fast hi-hats (16th notes)
+d3(s("hh*16").gain(0.35).pan(0.65).every(4, fast(2)))
+
+// Psychedelic lead (alternating patterns)
+d4(note("<c4 eb4 g4 bb4 c5 bb4 g4 eb4>").s("fm").gain(0.4).room(0.5).delay(0.25).pan(0.3))
+
+// Claps and open hats
+d5(s("~ cp ~ oh ~ cp ~ oh").gain(0.5).room(0.4).pan(0.7))
+
+// Powerful snare
+d6(s("~ ~ sd ~ ~ ~ sd ~").gain(0.7).room(0.3))
+
+// Extra percussion texture
+d7(s("~ ~ ~ ~ oh ~ ~ cp").gain(0.4).pan(0.8))
+
+// ====== PSYCHEDELIC VARIATIONS ======
+
+// Reverse bassline every 4 cycles (mind-bending!)
+d2(note("c1 c1 d1 eb1 f1 g1 f1 eb1").s("fm").gain(0.6).every(4, rev()).lpf(600))
+
+// Sometimes crazy fast hi-hats (50% chance)
+d3(s("hh*16").gain(0.35).sometimes(fast(2)).pan(0.6))
+
+// Alternate lead patterns
+d4(note("<c4 eb4 f4 g4 bb4 g4 f4 eb4 | c5 bb4 g4 f4 eb4 f4 g4 bb4>").s("fm").gain(0.4).room(0.5).delay(0.2))
+
+// ====== VOLUME CONTROL EXAMPLES ======
+
+// Loud kick drum
+d1(s("bd*4").gain(0.9))
+
+// Quiet hi-hats in the background
+d2(s("hh*8").gain(0.3).pan(0.7))
+
+// Medium volume snare with reverb
+d3(s("~ ~ sd ~").gain(0.6).room(0.5))
+
+// Soft bassline
+d4(note("c2 eb2 g2 bb2").s("sawtooth").gain(0.4).lpf(600))
+
+// Mix: loud drums + quiet melody
+d5(s("bd*4").gain(0.8))
+d6(note("c4 e4 g4 bb4").s("fm").gain(0.3).room(0.5))
+
+// Dynamic volume changes
+d7(s("bd sd").gain(0.7))
+d7(s("bd sd").gain(0.5))  // Re-evaluate to make it quieter
+
+// ====== STOP CONTROLS ======
+
+// Stop all
+hush()
+
+// Stop specific slots
+d5(silence())
+d6(silence())
+</textarea>
+            </div>
+
+            <!-- Visualization Panel -->
+            <aside class="viz-panel">
+                <div class="panel-section">
+                    <h3>Pattern Timeline</h3>
+                    <canvas id="timeline" width="300" height="80"></canvas>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Oscilloscope</h3>
+                    <canvas id="scope" width="300" height="100"></canvas>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Active Patterns</h3>
+                    <div id="activePatterns" class="pattern-list">
+                        <div class="pattern-item empty">No patterns running</div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Quick Reference</h3>
+                    <div class="reference">
+                        <strong>Slots (d1-d9):</strong><br>
+                        <code>d1(s("bd sd"))</code> - slot 1<br>
+                        <code>d2(note("c3"))</code> - slot 2<br>
+                        <code>d1(silence())</code> - mute slot<br>
+                        <br>
+                        <strong>Patterns:</strong><br>
+                        <code>s("bd sd hh")</code> - samples<br>
+                        <code>note("c3 e3")</code> - notes<br>
+                        <code>.fast(2)</code> - speed x2<br>
+                        <code>bd*4</code> - repeat 4x<br>
+                        <code>~</code> - rest<br>
+                        <code>hush()</code> - stop all<br>
+                        <br>
+                        <strong>Effects:</strong><br>
+                        <code>.gain(0.7)</code> - volume<br>
+                        <code>.room(0.5)</code> - reverb<br>
+                        <code>.delay(0.3)</code> - delay<br>
+                        <code>.lpf(800)</code> - filter<br>
+                        <code>.pan(0.5)</code> - pan<br>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Console Output -->
+        <div class="console">
+            <div class="console-header">
+                <span>Console</span>
+                <button id="clearConsole" class="btn-clear">Clear</button>
+            </div>
+            <div id="consoleOutput" class="console-output">
+                <div class="console-line success">✓ AlgoRave engine loaded</div>
+                <div class="console-line info">♪ Ready to code music...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>ALGORAVE - Help & Examples</h2>
+                <button class="modal-close" id="closeHelpBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <section class="help-section">
+                    <h3>🎵 Samples Disponibles (Drums)</h3>
+                    <div class="samples-grid">
+                        <div class="sample-item"><code>bd</code> - Bass Drum / Kick</div>
+                        <div class="sample-item"><code>sd</code> - Snare Drum</div>
+                        <div class="sample-item"><code>hh</code> - Hi-Hat</div>
+                        <div class="sample-item"><code>cp</code> - Clap</div>
+                        <div class="sample-item"><code>oh</code> - Open Hi-Hat</div>
+                        <div class="sample-item"><code>kick</code> - Bass Drum</div>
+                        <div class="sample-item"><code>snare</code> - Snare Drum</div>
+                        <div class="sample-item"><code>hihat</code> - Hi-Hat</div>
+                        <div class="sample-item"><code>clap</code> - Clap</div>
+                        <div class="sample-item"><code>openhh</code> - Open Hi-Hat</div>
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h3>🎹 Synthétiseurs Disponibles</h3>
+                    <div class="samples-grid">
+                        <div class="sample-item"><code>sine</code> - Onde sinusoïdale douce</div>
+                        <div class="sample-item"><code>square</code> - Onde carrée (8-bit)</div>
+                        <div class="sample-item"><code>sawtooth</code> - Onde dent de scie</div>
+                        <div class="sample-item"><code>triangle</code> - Onde triangle</div>
+                        <div class="sample-item"><code>fm</code> - Synthèse FM (modulaire)</div>
+                        <div class="sample-item"><code>am</code> - Synthèse AM</div>
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h3>📝 Syntaxe Mini-Notation</h3>
+                    <div class="code-examples">
+                        <div class="example-item">
+                            <code>bd sd hh sd</code>
+                            <span>4 sons espacés également</span>
+                        </div>
+                        <div class="example-item">
+                            <code>bd*4</code>
+                            <span>Répéter 4 fois</span>
+                        </div>
+                        <div class="example-item">
+                            <code>bd ~ sd ~</code>
+                            <span>~ = silence/rest</span>
+                        </div>
+                        <div class="example-item">
+                            <code>&lt;bd sd hh&gt;</code>
+                            <span>Alternance chaque cycle</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h3>🎛️ Transformations de Patterns</h3>
+                    <div class="code-examples">
+                        <div class="example-item">
+                            <code>.fast(2)</code>
+                            <span>Doubler la vitesse</span>
+                        </div>
+                        <div class="example-item">
+                            <code>.slow(2)</code>
+                            <span>Ralentir de moitié</span>
+                        </div>
+                        <div class="example-item">
+                            <code>.rev()</code>
+                            <span>Inverser le pattern</span>
+                        </div>
+                        <div class="example-item">
+                            <code>.every(4, fast(2))</code>
+                            <span>Tous les 4 cycles</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h3>🎚️ Effets Audio</h3>
+                    <div class="code-examples">
+                        <div class="example-item">
+                            <code>.gain(0.5)</code>
+                            <span>Volume (0-2, défaut 1.0)</span>
+                        </div>
+                        <div class="example-item">
+                            <code>.room(0.5)</code>
+                            <span>Reverb (0-1)</span>
+                        </div>
+                        <div class="example-item">
+                            <code>.delay(0.3)</code>
+                            <span>Delay/Echo (0-1)</span>
+                        </div>
+                        <div class="example-item">
+                            <code>.lpf(1000)</code>
+                            <span>Filtre passe-bas (Hz)</span>
+                        </div>
+                        <div class="example-item">
+                            <code>.pan(0.7)</code>
+                            <span>Panoramique (-1 à 1)</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h3>💡 Exemples Complets</h3>
+
+                    <div class="example-block">
+                        <h4>Techno Basique 135 BPM</h4>
+                        <pre><code>d1(s("bd*4"))
+d2(s("hh*8"))
+d3(s("~ sd ~ sd"))
+d4(note("c2 ~ eb2 ~").s("fm"))</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Psytrance Psychédélique</h4>
+                        <pre><code>d1(s("bd*4"))
+d2(s("hh*16").fast(2))
+d3(note("c3 d3 eb3 g3").s("fm").room(0.5))
+d4(s("oh ~ oh ~").delay(0.3))</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Drum & Bass 174 BPM</h4>
+                        <pre><code>d1(s("bd ~ sd bd ~ sd*2 bd ~"))
+d2(s("hh*8"))
+d3(note("c2 ~ c2 eb2").s("sawtooth").lpf(800))</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Patterns Avancés</h4>
+                        <pre><code>// Stack multiple patterns
+d1(stack(
+  s("bd*4"),
+  s("hh*8"),
+  note("c2").s("fm")
+))
+
+// Transformations conditionnelles
+d2(s("bd sd hh cp").every(4, rev()))
+
+// Effets combinés
+d3(note("c3 eb3 g3").s("triangle")
+   .room(0.4).delay(0.2).pan(0.7))</code></pre>
+                    </div>
+
+                    <div class="example-block">
+                        <h4>Contrôle des Slots</h4>
+                        <pre><code>// Arrêter un slot spécifique
+d1(silence())
+
+// Arrêter tous les patterns
+hush()
+
+// Chaque slot est indépendant
+d1(s("bd*4"))  // Joue dans slot 1
+d2(s("hh*8"))  // Joue dans slot 2
+d1(s("bd sd")) // Remplace le pattern du slot 1</code></pre>
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h3>⌨️ Raccourcis Clavier</h3>
+                    <div class="code-examples">
+                        <div class="example-item">
+                            <code>Ctrl+Enter</code>
+                            <span>Évaluer la ligne courante</span>
+                        </div>
+                        <div class="example-item">
+                            <code>Ctrl+Shift+Enter</code>
+                            <span>Évaluer tout le code</span>
+                        </div>
+                        <div class="example-item">
+                            <code>Ctrl+.</code>
+                            <span>Arrêter la lecture</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+
+    <!-- App Scripts -->
+    <script src="core/parser.js"></script>
+    <script src="core/pattern.js"></script>
+    <script src="audio/synths.js"></script>
+    <script src="audio/samples.js"></script>
+    <script src="audio/effects.js"></script>
+    <script src="audio/scheduler.js"></script>
+    <script src="editor/evaluator.js"></script>
+    <script src="ui/visualizer.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
