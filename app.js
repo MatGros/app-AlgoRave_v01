@@ -3,6 +3,20 @@
  * Integrates all components for live coding music
  */
 
+// Suppress expected browser warnings about AudioContext (normal behavior)
+(function() {
+    const originalWarn = console.warn;
+    console.warn = function(...args) {
+        const message = args[0];
+        if (typeof message === 'string' && 
+            (message.includes('AudioContext was not allowed to start') ||
+             message.includes('passive event listener'))) {
+            return; // Ignore these specific warnings
+        }
+        originalWarn.apply(console, args);
+    };
+})();
+
 class AlgoRaveApp {
     constructor() {
         this.editor = null;

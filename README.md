@@ -1,10 +1,10 @@
 # ALGORAVE - Live Coding Music
 
-A web-based live coding environment for making electronic music, inspired by [TidalCycles](https://tidalcycles.org/) and [Strudel](https://strudel.cc/).
+A web-based live coding environment for making electronic music in real-time using code patterns and transformations.
 
 ## Features
 
-- **Pattern Slots** - TidalCycles-style d1, d2, d3... slots
+- **Pattern Slots** - Independent d1, d2, d3... slots for organizing patterns
 - **Mini-notation Parser** - Concise pattern language
 - **Live Coding** - Evaluate code line-by-line with Ctrl+Enter
 - **Pattern Transformations** - fast(), slow(), rev(), every(), etc.
@@ -24,7 +24,7 @@ A web-based live coding environment for making electronic music, inspired by [Ti
 
 ## Pattern Slots (Important!)
 
-Like TidalCycles, you use **slots** to control your patterns. This prevents patterns from stacking up!
+You use **slots** to control your patterns independently. This prevents patterns from stacking up and keeps your mix organized!
 
 ```javascript
 // Slot 1: Drums
@@ -197,7 +197,7 @@ d4(note("c2 ~ eb2 f2 ~ g2 ~ bb2").s("sawtooth").lpf(400).fast(2))
 ## Stopping Patterns
 
 ```javascript
-// Stop all patterns (like TidalCycles)
+// Stop all patterns
 hush()
 
 // Or use this alias
@@ -270,12 +270,9 @@ d1(note("c3 e3 g3 c4"))  // C major arpeggio
 - **Web Audio API** - Audio synthesis
 - **Canvas API** - Visualizations
 
-## Inspiration
+## Philosophy
 
-- [TidalCycles](https://tidalcycles.org/) - Pattern-based live coding (d1, d2 concept)
-- [Strudel](https://strudel.cc/) - TidalCycles in the browser
-- [Sonic Pi](https://sonic-pi.net/) - Live coding synth
-- [Algorave](https://algorave.com/) - Live coding movement
+Inspired by the live coding music movement, this tool enables musicians to create and manipulate electronic music in real-time through code, making the creative process transparent and improvisational.
 
 ## Browser Support
 
