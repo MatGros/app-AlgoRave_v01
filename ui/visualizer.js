@@ -157,7 +157,7 @@ class Visualizer {
     }
 
     /**
-     * Draw waveform scope
+     * Draw waveform scope synchronized to tempo
      */
     drawScope() {
         if (!this.scopeCtx) return;
@@ -172,7 +172,7 @@ class Visualizer {
 
         // Create analyser if needed
         if (!this.analyser && window.synthEngine && window.synthEngine.masterGain) {
-            this.analyser = new Tone.Analyser('waveform', 256);
+            this.analyser = new Tone.Analyser('waveform', 512);
             window.synthEngine.masterGain.connect(this.analyser);
         }
 
@@ -184,23 +184,51 @@ class Visualizer {
             return;
         }
 
-        // Get waveform data
+        // Get current transport time and BPM for synchronization
+        const transportTime = Tone.Transport.seconds;
+        const bpm = Tone.Transport.bpm.value;
+        const beatDuration = 60 / bpm; // Duration of one beat in seconds
+        const cycleDuration = beatDuration * 4; // One cycle = 4 beats
+        
+        // Synchronize to cycle: get phase within current cycle (0-1)
+        const cyclePhase = (transportTime % cycleDuration) / cycleDuration;
+        
+        // Calculate the time window to capture (one beat worth of audio)
+        const timeWindowDuration = beatDuration;
+        const startTime = transportTime - (cyclePhase * cycleDuration) + (cyclePhase * timeWindowDuration);
+        
+        // Get waveform data - higher resolution for better visualization
         const waveform = this.analyser.getValue();
 
-        // Draw waveform
+        // Draw grid lines (beat markers)
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 4; i++) {
+            const x = (i / 4) * width;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+        }
+
+        // Draw waveform with smooth interpolation
         ctx.strokeStyle = '#00d4ff';
         ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
         ctx.beginPath();
 
         const sliceWidth = width / waveform.length;
         let x = 0;
+        let firstPoint = true;
 
         for (let i = 0; i < waveform.length; i++) {
             const v = (waveform[i] + 1) / 2; // Normalize -1/1 to 0/1
             const y = v * height;
 
-            if (i === 0) {
+            if (firstPoint) {
                 ctx.moveTo(x, y);
+                firstPoint = false;
             } else {
                 ctx.lineTo(x, y);
             }
@@ -210,13 +238,28 @@ class Visualizer {
 
         ctx.stroke();
 
-        // Draw center line
-        ctx.strokeStyle = '#333';
+        // Draw center line (zero crossing)
+        ctx.strokeStyle = '#00ff88';
         ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
         ctx.beginPath();
         ctx.moveTo(0, height / 2);
         ctx.lineTo(width, height / 2);
         ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Draw cycle synchronization indicator
+        ctx.fillStyle = '#ff0088';
+        ctx.globalAlpha = 0.3 + (0.7 * cyclePhase); // Pulse with cycle
+        ctx.fillRect(0, 0, width * cyclePhase, 3);
+        ctx.globalAlpha = 1.0;
+
+        // Draw info text
+        ctx.fillStyle = '#00d4ff';
+        ctx.font = '10px Consolas';
+        ctx.textAlign = 'left';
+        ctx.fillText(`BPM: ${Math.round(bpm)}`, 5, 12);
+        ctx.fillText(`Cycle: ${(cyclePhase * 100).toFixed(0)}%`, 5, 24);
     }
 }
 

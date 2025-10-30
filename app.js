@@ -141,8 +141,14 @@ d6(silence())`;
             tabSize: 2,
             indentWithTabs: false,
             lineWrapping: true,
-            autofocus: true
+            autofocus: true,
+            extraKeys: {
+                'Ctrl-Space': 'autocomplete'
+            }
         });
+
+        // Setup autocomplete hints
+        this.setupAutocomplete();
 
         // Set up keyboard shortcuts
         this.editor.setOption('extraKeys', {
@@ -169,6 +175,10 @@ d6(silence())`;
             'Cmd-.': (cm) => {
                 this.stopCurrentSlot();
                 return true;
+            },
+            'Ctrl-Space': (cm) => {
+                this.showAutocomplete();
+                return true;
             }
         });
         
@@ -190,6 +200,107 @@ d6(silence())`;
         });
 
         console.log('CodeMirror initialized');
+    }
+
+    /**
+     * Setup autocomplete hints
+     */
+    setupAutocomplete() {
+        // Define all available commands and functions
+        this.autocompleteHints = {
+            // Pattern creation
+            's': { text: 's("bd sd")', displayText: 's() - Sound/Sample pattern', hint: 's' },
+            'note': { text: 'note("c3 e3 g3")', displayText: 'note() - Note pattern', hint: 'note' },
+            'stack': { text: 'stack(\n  s("bd*4"),\n  note("c2")\n)', displayText: 'stack() - Stack multiple patterns', hint: 'stack' },
+
+            // Pattern slots
+            'd1': { text: 'd1(s(""))', displayText: 'd1 - Pattern slot 1', hint: 'd1' },
+            'd2': { text: 'd2(s(""))', displayText: 'd2 - Pattern slot 2', hint: 'd2' },
+            'd3': { text: 'd3(s(""))', displayText: 'd3 - Pattern slot 3', hint: 'd3' },
+            'd4': { text: 'd4(s(""))', displayText: 'd4 - Pattern slot 4', hint: 'd4' },
+            'd5': { text: 'd5(s(""))', displayText: 'd5 - Pattern slot 5', hint: 'd5' },
+            'd6': { text: 'd6(s(""))', displayText: 'd6 - Pattern slot 6', hint: 'd6' },
+            'd7': { text: 'd7(s(""))', displayText: 'd7 - Pattern slot 7', hint: 'd7' },
+            'd8': { text: 'd8(s(""))', displayText: 'd8 - Pattern slot 8', hint: 'd8' },
+            'd9': { text: 'd9(s(""))', displayText: 'd9 - Pattern slot 9', hint: 'd9' },
+
+            // Control functions
+            'hush': { text: 'hush()', displayText: 'hush() - Stop all patterns', hint: 'hush' },
+            'silence': { text: 'silence()', displayText: 'silence() - Silence a slot', hint: 'silence' },
+
+            // Effects
+            'fast': { text: '.fast(2)', displayText: '.fast(n) - Speed up n times', hint: 'fast' },
+            'slow': { text: '.slow(2)', displayText: '.slow(n) - Slow down n times', hint: 'slow' },
+            'rev': { text: '.rev()', displayText: '.rev() - Reverse pattern', hint: 'rev' },
+            'every': { text: '.every(4, fast(2))', displayText: '.every(n, effect) - Apply effect every n cycles', hint: 'every' },
+            'sometimes': { text: '.sometimes(fast(2))', displayText: '.sometimes(effect) - 50% chance', hint: 'sometimes' },
+            'rarely': { text: '.rarely(fast(2))', displayText: '.rarely(effect) - 25% chance', hint: 'rarely' },
+            'often': { text: '.often(fast(2))', displayText: '.often(effect) - 75% chance', hint: 'often' },
+
+            // Audio effects
+            'gain': { text: '.gain(0.5)', displayText: '.gain(n) - Volume/gain', hint: 'gain' },
+            'room': { text: '.room(0.5)', displayText: '.room(n) - Reverb', hint: 'room' },
+            'delay': { text: '.delay(0.3)', displayText: '.delay(n) - Delay effect', hint: 'delay' },
+            'lpf': { text: '.lpf(800)', displayText: '.lpf(hz) - Low-pass filter', hint: 'lpf' },
+            'hpf': { text: '.hpf(100)', displayText: '.hpf(hz) - High-pass filter', hint: 'hpf' },
+            'pan': { text: '.pan(0.5)', displayText: '.pan(n) - Pan left/right (0-1)', hint: 'pan' },
+
+            // Synth types
+            'sine': { text: '.s("sine")', displayText: '"sine" - Pure sine wave', hint: 'sine' },
+            'square': { text: '.s("square")', displayText: '"square" - Square wave', hint: 'square' },
+            'sawtooth': { text: '.s("sawtooth")', displayText: '"sawtooth" - Sawtooth wave', hint: 'sawtooth' },
+            'triangle': { text: '.s("triangle")', displayText: '"triangle" - Triangle wave', hint: 'triangle' },
+            'fm': { text: '.s("fm")', displayText: '"fm" - FM synthesis', hint: 'fm' },
+            'am': { text: '.s("am")', displayText: '"am" - AM synthesis', hint: 'am' },
+
+            // Drum samples
+            'bd': { text: 's("bd")', displayText: '"bd"/"kick" - Bass drum', hint: 'bd' },
+            'sd': { text: 's("sd")', displayText: '"sd"/"snare" - Snare drum', hint: 'sd' },
+            'hh': { text: 's("hh")', displayText: '"hh"/"hihat" - Hi-hat', hint: 'hh' },
+            'oh': { text: 's("oh")', displayText: '"oh"/"openhh" - Open hi-hat', hint: 'oh' },
+            'cp': { text: 's("cp")', displayText: '"cp"/"clap" - Clap', hint: 'cp' }
+        };
+    }
+
+    /**
+     * Show autocomplete suggestions
+     */
+    showAutocomplete() {
+        const cursor = this.editor.getCursor();
+        const line = this.editor.getLine(cursor.line);
+        const start = cursor.ch;
+        let word = '';
+
+        // Get the word being typed
+        for (let i = start - 1; i >= 0; i--) {
+            const char = line[i];
+            if (/[a-zA-Z0-9_]/.test(char)) {
+                word = char + word;
+            } else {
+                break;
+            }
+        }
+
+        // Get matching hints
+        const suggestions = [];
+        for (const [key, hint] of Object.entries(this.autocompleteHints)) {
+            if (key.toLowerCase().startsWith(word.toLowerCase())) {
+                suggestions.push({
+                    text: hint.text,
+                    displayText: hint.displayText
+                });
+            }
+        }
+
+        if (suggestions.length > 0) {
+            this.editor.showHint({
+                hint: () => ({
+                    from: CodeMirror.Pos(cursor.line, start - word.length),
+                    to: cursor,
+                    list: suggestions
+                })
+            });
+        }
     }
 
     /**

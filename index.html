@@ -41,7 +41,7 @@
         <main class="main-content">
             <div class="editor-container">
                 <div class="editor-toolbar">
-                    <span class="help-text">Ctrl+Enter: evaluate single line | Ctrl+Shift+Enter: evaluate selected lines | Ctrl+.: stop selected lines</span>
+                    <span class="help-text">Ctrl+Enter: evaluate single line | Ctrl+Shift+Enter: evaluate selected lines | Ctrl+.: stop selected lines | Ctrl+Space: autocomplete</span>
                     <button id="resetCodeBtn" class="btn-reset" title="Restore default code">Reset Code</button>
                 </div>
                 <textarea id="codeEditor">// PSYCHEDELIC PROGRESSIVE - 138 BPM ��🎵
@@ -401,11 +401,15 @@ d1(s("bd sd")) // Remplace le pattern du slot 1</code></pre>
                         </div>
                         <div class="example-item">
                             <code>Ctrl+Shift+Enter</code>
-                            <span>Évaluer tout le code</span>
+                            <span>Évaluer les lignes sélectionnées</span>
                         </div>
                         <div class="example-item">
                             <code>Ctrl+.</code>
-                            <span>Arrêter la lecture</span>
+                            <span>Arrêter les slots sélectionnés</span>
+                        </div>
+                        <div class="example-item">
+                            <code>Ctrl+Space</code>
+                            <span>Autocomplétion (show all commands)</span>
                         </div>
                     </div>
                 </section>
@@ -417,6 +421,8 @@ d1(s("bd sd")) // Remplace le pattern du slot 1</code></pre>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
 
     <!-- App Scripts -->
     <script src="core/parser.js"></script>
