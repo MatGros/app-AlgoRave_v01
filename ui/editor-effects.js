@@ -179,10 +179,44 @@ class EditorEffects {
     
     /**
      * Find the background div element for a specific line number
+     * Uses CodeMirror's internal API to get the correct line position
      */
     findLineBackgroundElement(lineNumber) {
-        const lineElements = this.editor.getWrapperElement().querySelectorAll('.CodeMirror-line');
-        return lineElements[lineNumber];
+        try {
+            // Get the line handle from CodeMirror
+            const lineHandle = this.editor.getLineHandle(lineNumber);
+            if (!lineHandle) return null;
+
+            // Get the line's DOM element from the gutter (more reliable)
+            const gutterMarker = this.editor.getWrapperElement().querySelector(
+                `.CodeMirror-linenumber[data-line-number="${lineNumber}"]`
+            );
+
+            if (gutterMarker) {
+                // Get the parent line container
+                const lineElement = gutterMarker.closest('.CodeMirror-gutter-elt')?.nextElementSibling;
+                if (lineElement) return lineElement;
+            }
+
+            // Fallback: Find by line content position
+            const cm = this.editor;
+            const coords = cm.charCoords({ line: lineNumber, ch: 0 }, 'local');
+            const wrapper = cm.getWrapperElement();
+
+            // Find the line element closest to these coordinates
+            const allLines = wrapper.querySelectorAll('.CodeMirror-line');
+            for (let i = 0; i < allLines.length; i++) {
+                const rect = allLines[i].getBoundingClientRect();
+                const wrapperRect = wrapper.getBoundingClientRect();
+                if (Math.abs(rect.top - (wrapperRect.top + coords.top)) < 5) {
+                    return allLines[i];
+                }
+            }
+
+            return null;
+        } catch (e) {
+            return null;
+        }
     }
 
     /**
@@ -222,6 +256,29 @@ class EditorEffects {
                 lineElement.style.borderLeft = `3px solid ${color}`;
                 lineElement.style.boxShadow = `inset 0 0 20px rgba(${r}, ${g}, ${b}, 0.4)`;
             }
+        }
+    }
+
+    /**
+     * Clear all highlights (used by hush/silence)
+     */
+    clearAllHighlights() {
+        for (const [lineNumber] of this.activeLines) {
+            this.clearLineHighlight(lineNumber);
+        }
+        this.activeLines.clear();
+        this.slotHighlights.clear();
+    }
+
+    /**
+     * Clear highlights for a specific slot (used by silence())
+     */
+    clearSlotHighlight(slotNumber) {
+        if (this.slotHighlights.has(slotNumber)) {
+            const data = this.slotHighlights.get(slotNumber);
+            this.clearLineHighlight(data.lineNumber);
+            this.activeLines.delete(data.lineNumber);
+            this.slotHighlights.delete(slotNumber);
         }
     }
 

@@ -724,39 +724,73 @@ masterReset()`;
      */
     evaluateSelection() {
         let lines = [];
+        let lineNumbers = [];
         let isSelection = false;
 
         // Check if there's a selection
         if (this.editor.somethingSelected()) {
-            const selection = this.editor.getSelection();
-            lines = selection.split('\n').filter(line => line.trim().length > 0);
+            const anchor = this.editor.getCursor('anchor');
+            const head = this.editor.getCursor('head');
+            const startLine = Math.min(anchor.line, head.line);
+            const endLine = Math.max(anchor.line, head.line);
+
+            // Collect all selected lines with their line numbers
+            for (let i = startLine; i <= endLine; i++) {
+                const line = this.editor.getLine(i);
+                if (line.trim().length > 0 && !line.trim().startsWith('//')) {
+                    lines.push(line);
+                    lineNumbers.push(i);
+                }
+            }
             isSelection = true;
             this.log(`Evaluating ${lines.length} selected line(s)...`, 'info');
         } else {
             // If no selection, use all code (like evaluateAll)
             const code = this.editor.getValue();
-            lines = code.split('\n').filter(line => line.trim().length > 0);
+            const allLines = code.split('\n');
+            allLines.forEach((line, index) => {
+                if (line.trim().length > 0 && !line.trim().startsWith('//')) {
+                    lines.push(line);
+                    lineNumbers.push(index);
+                }
+            });
             this.log('No selection - evaluating all code...', 'info');
         }
+
+        // Group lines by slot to keep only the last one per slot
+        const slotMap = new Map();
+        lines.forEach((line, index) => {
+            const slotMatch = line.match(/d(\d+)/);
+            const slotNumber = slotMatch ? parseInt(slotMatch[1]) : null;
+
+            // Keep only the last line for each slot
+            slotMap.set(slotNumber, { line, lineNumber: lineNumbers[index], index });
+        });
 
         let successCount = 0;
         let errorCount = 0;
 
-        lines.forEach((line) => {
-            // Skip comments
-            if (line.trim().startsWith('//')) {
-                return;
-            }
+        // Evaluate only the last line of each slot
+        for (const data of slotMap.values()) {
+            const line = data.line;
+            const lineNumber = data.lineNumber;
 
             const result = window.codeEvaluator.evaluate(line);
             if (result.success) {
                 successCount++;
                 this.log(`✓ ${line.trim().substring(0, 60)}`, 'success');
+
+                // Highlight the executed line with slot color
+                if (this.editorEffects) {
+                    const slotMatch = line.match(/d(\d+)/);
+                    const slotNum = slotMatch ? parseInt(slotMatch[1]) : null;
+                    this.editorEffects.markLineActive(lineNumber, slotNum);
+                }
             } else {
                 errorCount++;
                 this.log(`✗ ${result.message}`, 'error');
             }
-        });
+        }
 
         const suffix = isSelection ? ' (selected)' : ' (all)';
         this.log(`✓ ${successCount} patterns, ✗ ${errorCount} errors${suffix}`, successCount > errorCount ? 'success' : 'warning');

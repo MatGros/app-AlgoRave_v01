@@ -166,6 +166,13 @@ class CodeEvaluator {
                 // Empty slot = silence this slot
                 window.scheduler.removePattern(slotName);
                 this.slots[slotName] = null;
+
+                // Also clear highlight for this slot
+                if (window.app && window.app.editorEffects) {
+                    const slotNumber = parseInt(slotName.substring(1));
+                    window.app.editorEffects.clearSlotHighlight(slotNumber);
+                }
+
                 return { success: true, message: `✓ ${slotName} silenced` };
             }
 
@@ -265,6 +272,10 @@ class CodeEvaluator {
      */
     hush() {
         window.scheduler.clearPatterns();
+        // Also clear all line highlights
+        if (window.app && window.app.editorEffects) {
+            window.app.editorEffects.clearAllHighlights();
+        }
         return { success: true, message: '✓ All patterns stopped (hushed)' };
     }
 

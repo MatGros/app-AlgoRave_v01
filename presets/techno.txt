@@ -6,7 +6,7 @@ d1(s("kick2*4").gain(0.8).room(0.2))
 d1(s("bd*4").gain(0.8).room(0.2))
 d1(s("hh*4").gain(0.8).room(0.2))
 d1(s("cp*4").gain(0.8).room(0.2))
-
+hush()
 d1(s("cp*4").gain(0.8))
 d1(s("bd sd hh cp"))
 
