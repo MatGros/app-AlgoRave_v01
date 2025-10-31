@@ -41,7 +41,34 @@ class EditorEffects {
     start() {
         if (this.isRunning) return;
         this.isRunning = true;
+
+        // Initialize analysers for active slots
+        if (window.scheduler && window.scheduler.patterns) {
+            for (const [slotId] of window.scheduler.patterns) {
+                this.createSlotAnalyser(slotId);
+            }
+        }
+
         this.animate();
+    }
+
+    /**
+     * Create analyser for a slot (setup audio monitoring)
+     */
+    createSlotAnalyser(slotId) {
+        if (!window.slotAnalyser) return;
+
+        try {
+            // Create analyser for this slot
+            const analyser = window.slotAnalyser.createAnalyserForSlot(slotId);
+            if (!analyser) return;
+
+            // TODO: Connect analyser to the slot's gain node
+            // For now, the global analyser in visualizer captures all output
+            // and we estimate slot volume based on patterns
+        } catch (e) {
+            console.warn(`Could not setup analyser for ${slotId}:`, e);
+        }
     }
 
     /**
@@ -62,6 +89,11 @@ class EditorEffects {
      */
     animate() {
         if (!this.isRunning) return;
+
+        // Update slot volumes for dynamic highlighting
+        if (window.slotAnalyser) {
+            window.slotAnalyser.updateAll();
+        }
 
         // DISABLED: Audio-reactive background to debug highlighting issues
         // if (this.audioReactive && this.visualizer && this.visualizer.analyser) {
@@ -277,6 +309,7 @@ class EditorEffects {
     /**
      * Update active line highlights (persistent, no timeout)
      * The highlight stays until a new line is executed
+     * Intensity varies with slot volume
      */
     updateActiveLineHighlights() {
         for (const [lineNumber, data] of this.activeLines) {
@@ -288,10 +321,23 @@ class EditorEffects {
                 const g = parseInt(color.substr(3,2), 16);
                 const b = parseInt(color.substr(5,2), 16);
 
-                // Maintain full opacity - persistent highlight
-                lineElement.style.backgroundColor = `rgba(${r}, ${g}, ${b}, 0.3)`;
-                lineElement.style.borderLeft = `3px solid ${color}`;
-                lineElement.style.boxShadow = `inset 0 0 20px rgba(${r}, ${g}, ${b}, 0.4)`;
+                // Get slot volume (0-1) to vary intensity
+                let volumeIntensity = 1;
+                if (window.slotAnalyser && data.slotNumber) {
+                    const slotId = `d${data.slotNumber}`;
+                    const slotVolume = window.slotAnalyser.getVolume(slotId);
+                    // Map volume to intensity: minimum 0.3 at silence, maximum 1 at peak
+                    volumeIntensity = 0.3 + slotVolume * 0.7;
+                }
+
+                // Base opacity values
+                const bgOpacity = 0.3 * volumeIntensity;
+                const shadowOpacity = 0.4 * volumeIntensity;
+
+                // Apply dynamic highlights based on volume
+                lineElement.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${bgOpacity})`;
+                lineElement.style.borderLeft = `3px solid rgba(${r}, ${g}, ${b}, ${volumeIntensity})`;
+                lineElement.style.boxShadow = `inset 0 0 20px rgba(${r}, ${g}, ${b}, ${shadowOpacity}), 0 0 10px rgba(${r}, ${g}, ${b}, ${volumeIntensity * 0.3})`;
             }
         }
     }
