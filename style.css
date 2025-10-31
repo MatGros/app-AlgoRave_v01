@@ -547,6 +547,22 @@ body {
     color: var(--bg-dark);
 }
 
+.btn-fx {
+    border-color: #aa00ff;
+    color: #aa00ff;
+}
+
+.btn-fx:hover {
+    background: #aa00ff;
+    color: var(--bg-dark);
+}
+
+.btn-fx.active {
+    background: #aa00ff;
+    color: var(--bg-dark);
+    box-shadow: 0 0 10px #aa00ff;
+}
+
 /* ===== HELP MODAL ===== */
 
 .modal {
@@ -976,4 +992,52 @@ body {
         box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
         transform: scale(1);
     }
+}
+
+/* ===== EDITOR EFFECTS - Active Line Highlighting ===== */
+
+/* CSS Variables for dynamic line highlight colors */
+.CodeMirror-line {
+    --line-highlight-color: rgba(0, 255, 136, 0.15);
+    --line-highlight-opacity: 1;
+}
+
+/* Executed line - glowing border effect with slot color */
+.line-executed {
+    background: var(--line-highlight-color) !important;
+    border-left: 3px solid var(--line-highlight-color) !important;
+    position: relative !important;
+    z-index: 10 !important; /* Stay above audio-reactive background */
+    animation: lineExecutedPulse 0.3s ease-out;
+}
+
+.line-executed-wrap {
+    box-shadow: inset 0 0 20px var(--line-highlight-color) !important;
+    position: relative !important;
+    z-index: 10 !important;
+}
+
+@keyframes lineExecutedPulse {
+    0% {
+        filter: brightness(1.5);
+        box-shadow: 0 0 20px var(--line-highlight-color);
+    }
+    100% {
+        filter: brightness(1);
+        box-shadow: none;
+    }
+}
+
+/* Audio-reactive editor background transition (lower priority than line highlight) */
+.CodeMirror {
+    transition: background-color 0.1s ease-out;
+}
+
+.CodeMirror-gutters {
+    transition: background-color 0.1s ease-out;
+}
+
+/* Ensure line backgrounds have position relative for z-index */
+.CodeMirror-lines {
+    position: relative;
 }

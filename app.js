@@ -135,6 +135,12 @@ masterReset()`;
             console.warn('❌ Psychedelic visuals object not found');
         }
 
+        // Initialize editor effects (audio-reactive background and line highlighting)
+        if (window.EditorEffects) {
+            this.editorEffects = new window.EditorEffects(this.editor, window.visualizer);
+            console.log('✓ Editor effects initialized');
+        }
+
         // Setup UI update functions
         this.setupUIUpdates();
 
@@ -580,6 +586,17 @@ masterReset()`;
             this.hideExamples();
         });
 
+        // Toggle audio-reactive background button
+        document.getElementById('toggleAudioReactiveBtn').addEventListener('click', () => {
+            if (this.editorEffects) {
+                const isActive = this.editorEffects.toggleAudioReactive();
+                const btn = document.getElementById('toggleAudioReactiveBtn');
+                btn.textContent = isActive ? '🎨 BG FX ON' : '🎨 BG FX OFF';
+                btn.classList.toggle('active', isActive);
+                this.log(isActive ? 'Audio-reactive background enabled' : 'Audio-reactive background disabled', 'info');
+            }
+        });
+
         // Close examples modal when clicking outside
         document.getElementById('examplesModal').addEventListener('click', (e) => {
             if (e.target.id === 'examplesModal') {
@@ -642,7 +659,8 @@ masterReset()`;
      */
     evaluateCurrentLine() {
         const cursor = this.editor.getCursor();
-        const code = this.editor.getLine(cursor.line);
+        const lineNumber = cursor.line;
+        const code = this.editor.getLine(lineNumber);
 
         if (!code.trim()) return;
 
@@ -651,6 +669,14 @@ masterReset()`;
 
         if (result.success) {
             this.log(result.message, 'success');
+
+            // Highlight the executed line with slot color
+            if (this.editorEffects) {
+                // Extract slot number from code (d1, d2, etc.)
+                const slotMatch = code.match(/d(\d+)/);
+                const slotNumber = slotMatch ? parseInt(slotMatch[1]) : null;
+                this.editorEffects.markLineActive(lineNumber, slotNumber);
+            }
 
             // Auto-start if not playing
             if (!window.scheduler.isPlaying) {
@@ -819,6 +845,11 @@ masterReset()`;
             window.psychedelicVisuals.start();
         }
 
+        // Start editor effects (audio-reactive background)
+        if (this.editorEffects) {
+            this.editorEffects.start();
+        }
+
         this.log('▶ Playback started', 'success');
     }
 
@@ -836,6 +867,11 @@ masterReset()`;
         // Stop psychedelic visuals
         if (window.psychedelicVisuals) {
             window.psychedelicVisuals.stop();
+        }
+
+        // Stop editor effects
+        if (this.editorEffects) {
+            this.editorEffects.stop();
         }
 
         // Update active patterns
