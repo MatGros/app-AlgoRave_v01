@@ -99,9 +99,9 @@ class Visualizer {
             ctx.fillRect(x - 1, 0, 2, height - 10);
         }
 
-        // Color palette for slots
-        const slotColors = [
-            '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', 
+        // Use shared slot colors from slot-colors.js
+        const slotColors = window.getSlotColorsArray ? window.getSlotColorsArray() : [
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A',
             '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B'
         ];
 
@@ -116,9 +116,9 @@ class Visualizer {
             }
 
             // Extract slot number from id (d1, d2, etc.)
-            const slotMatch = id.match(/d(\d)/);
+            const slotMatch = id.match(/d(\d+)/);
             const slotNumber = slotMatch ? parseInt(slotMatch[1]) : 0;
-            const slotColor = slotColors[(slotNumber - 1) % slotColors.length];
+            const slotColor = window.getSlotColor ? window.getSlotColor(slotNumber) : slotColors[(slotNumber - 1) % slotColors.length];
 
             const events = pattern.getEventsForCycle(window.scheduler.currentCycle);
 

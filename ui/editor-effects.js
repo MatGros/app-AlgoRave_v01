@@ -21,16 +21,17 @@ class EditorEffects {
         this.slotHighlights = new Map(); // Map of slot number -> { lineNumber, color }
         this.highlightDuration = Infinity; // Never auto-remove (persistent until new line)
         
-        // Slot colors (matching pattern colors)
-        this.slotColors = {
-            1: '#00ff88',  // Green (d1)
-            2: '#00d4ff',  // Cyan (d2)
-            3: '#ff0088',  // Pink (d3)
-            4: '#ffaa00',  // Orange (d4)
-            5: '#aa00ff',  // Purple (d5)
-            6: '#ff8800',  // Dark Orange (d6)
-            7: '#88ff00',  // Lime (d7)
-            8: '#ff0044',  // Red (d8)
+        // Use shared slot colors from slot-colors.js
+        this.slotColors = window.SLOT_COLORS || {
+            1: '#FF6B6B',  // Red
+            2: '#4ECDC4',  // Teal
+            3: '#45B7D1',  // Blue
+            4: '#FFA07A',  // Light Salmon
+            5: '#98D8C8',  // Mint
+            6: '#F7DC6F',  // Yellow
+            7: '#BB8FCE',  // Purple
+            8: '#85C1E2',  // Light Blue
+            9: '#F8B88B'   // Peach
         };
     }
 
@@ -180,37 +181,45 @@ class EditorEffects {
     
     /**
      * Find the background div element for a specific line number
-     * Uses CodeMirror's internal API to get the correct line position
+     * Uses CodeMirror's lineInfo and DOM traversal for maximum reliability
      */
     findLineBackgroundElement(lineNumber) {
         try {
-            // Get the line handle from CodeMirror
-            const lineHandle = this.editor.getLineHandle(lineNumber);
-            if (!lineHandle) return null;
+            // Get line info from CodeMirror - this is more reliable
+            const lineInfo = this.editor.lineInfo(lineNumber);
+            if (!lineInfo || !lineInfo.handle) return null;
 
-            // Get the line's DOM element from the gutter (more reliable)
-            const gutterMarker = this.editor.getWrapperElement().querySelector(
-                `.CodeMirror-linenumber[data-line-number="${lineNumber}"]`
-            );
-
-            if (gutterMarker) {
-                // Get the parent line container
-                const lineElement = gutterMarker.closest('.CodeMirror-gutter-elt')?.nextElementSibling;
-                if (lineElement) return lineElement;
+            // Method 1: Try to get the line element directly from CodeMirror's internals
+            if (this.editor.display && this.editor.display.lines) {
+                const lineView = this.editor.display.lineView(this.editor.getLineHandle(lineNumber));
+                if (lineView && lineView.node) {
+                    return lineView.node;
+                }
             }
 
-            // Fallback: Find by line content position
-            const cm = this.editor;
-            const coords = cm.charCoords({ line: lineNumber, ch: 0 }, 'local');
-            const wrapper = cm.getWrapperElement();
+            // Method 2: Find the line by searching the pre-rendered lines
+            const wrapper = this.editor.getWrapperElement();
+            const lineElements = wrapper.querySelectorAll('.CodeMirror-line');
 
-            // Find the line element closest to these coordinates
-            const allLines = wrapper.querySelectorAll('.CodeMirror-line');
-            for (let i = 0; i < allLines.length; i++) {
-                const rect = allLines[i].getBoundingClientRect();
-                const wrapperRect = wrapper.getBoundingClientRect();
-                if (Math.abs(rect.top - (wrapperRect.top + coords.top)) < 5) {
-                    return allLines[i];
+            // Get the expected position from CodeMirror
+            const coords = this.editor.charCoords({ line: lineNumber, ch: 0 }, 'page');
+            const wrapperRect = wrapper.getBoundingClientRect();
+
+            // Find the line element that matches the vertical position
+            for (let lineEl of lineElements) {
+                const rect = lineEl.getBoundingClientRect();
+                // Check if the element's top position matches our target line's top position
+                if (Math.abs(rect.top - coords.top) < 2) {
+                    return lineEl;
+                }
+            }
+
+            // Method 3: Last resort - iterate through pre elements
+            const pres = wrapper.querySelectorAll('pre');
+            for (let pre of pres) {
+                const rect = pre.getBoundingClientRect();
+                if (Math.abs(rect.top - coords.top) < 2) {
+                    return pre;
                 }
             }
 
