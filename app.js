@@ -233,6 +233,9 @@ masterReset()`;
         // Initialize saved code hash (code is already saved at load time)
         this.savedCodeHash = this.hashCode(savedCode);
 
+        // Initialize save button to "Saved!" state (code is fresh from server)
+        this.showSavedState();
+
         console.log('CodeMirror initialized');
     }
 
