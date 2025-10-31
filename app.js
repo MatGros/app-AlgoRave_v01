@@ -17,6 +17,7 @@ class AlgoRaveApp {
         this.AUTO_LOAD_PRESET = 'techno'; // preset to auto-load on refresh (set to null to disable)
     this.LAST_PRESET_KEY = 'algorave_last_preset';
     this.STORAGE_KEY = 'algorave_code';
+        this.savedCodeHash = null; // Track if code has been modified since save
         this.DEFAULT_CODE = `// PSYTRANCE SET - 140 BPM 🎵
 // 1. Click START first!
 // 2. Press Ctrl+Enter on each line to build the track
@@ -221,10 +222,64 @@ masterReset()`;
 
         // Auto-save code on changes
         this.editor.on('change', () => {
+            // Check if code has been modified since last save
+            if (this.isCodeModified()) {
+                this.resetSaveButton();
+            }
             this.saveCode();
         });
 
+        // Initialize saved code hash (code is already saved at load time)
+        this.savedCodeHash = this.hashCode(savedCode);
+
         console.log('CodeMirror initialized');
+    }
+
+    /**
+     * Simple hash function for code comparison
+     */
+    hashCode(code) {
+        let hash = 0;
+        if (code.length === 0) return hash;
+        for (let i = 0; i < code.length; i++) {
+            const char = code.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return hash;
+    }
+
+    /**
+     * Check if code has been modified since last save
+     */
+    isCodeModified() {
+        if (!this.savedCodeHash) return false;
+        const currentCode = this.editor.getValue();
+        return this.hashCode(currentCode) !== this.savedCodeHash;
+    }
+
+    /**
+     * Reset save button to "✓ Saved!" state
+     */
+    showSavedState() {
+        const btn = document.getElementById('saveCodeBtn');
+        if (!btn) return;
+
+        btn.classList.remove('saving');
+        btn.classList.add('saved');
+        btn.textContent = '✓ Saved!';
+    }
+
+    /**
+     * Reset save button to "Save" state
+     */
+    resetSaveButton() {
+        const btn = document.getElementById('saveCodeBtn');
+        if (!btn) return;
+
+        btn.classList.remove('saving');
+        btn.classList.remove('saved');
+        btn.textContent = 'Save';
     }
 
     /**
@@ -1121,17 +1176,12 @@ masterReset()`;
             const result = await this.saveCodeImmediate();
 
             // Show "saved" state
-            btn.classList.remove('saving');
-            btn.classList.add('saved');
-            btn.textContent = '✓ Saved!';
+            this.showSavedState();
             this.log(`Code saved to server (${code.length} chars)`, 'success');
             console.log('[Save] SUCCESS: Code was saved');
 
-            // Reset button after 2 seconds
-            setTimeout(() => {
-                btn.classList.remove('saved');
-                btn.textContent = 'Save';
-            }, 2000);
+            // Save the hash to track modifications
+            this.savedCodeHash = this.hashCode(code);
         } catch (error) {
             console.error('[Save] FAILED:', error);
             btn.classList.remove('saving');
