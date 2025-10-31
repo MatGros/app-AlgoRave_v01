@@ -19,6 +19,7 @@ class AlgoRaveApp {
     this.STORAGE_KEY = 'algorave_code';
         this.savedCodeHash = null; // Track if code has been modified since save
         this.isSaved = false; // Track if we just showed "Saved!" state
+        this.lastEditorLength = 0; // Track code length to detect real changes
         this.DEFAULT_CODE = `// PSYTRANCE SET - 140 BPM 🎵
 // 1. Click START first!
 // 2. Press Ctrl+Enter on each line to build the track
@@ -223,15 +224,18 @@ masterReset()`;
 
         // Auto-save code on changes
         this.editor.on('change', () => {
-            // If we were showing "Saved!", reset it when user types
-            if (this.isSaved) {
+            const currentCode = this.editor.getValue();
+            // Only reset "Saved!" if code length actually changed (add/delete content)
+            if (this.isSaved && currentCode.length !== this.lastEditorLength) {
                 this.resetSaveButton();
             }
+            this.lastEditorLength = currentCode.length;
             this.saveCode();
         });
 
         // Initialize saved code hash (code is already saved at load time)
         this.savedCodeHash = this.hashCode(savedCode);
+        this.lastEditorLength = savedCode.length;
 
         // Initialize save button to "Saved!" state (code is fresh from server)
         this.showSavedState();

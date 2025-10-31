@@ -10,6 +10,7 @@ hush()
 d1(s("cp*4").gain(0.8))
 d1(s("bd sd hh cp"))
 
+
 // Hi-hats subtils (16ths)
 d2(s("hh*16").gain(0.25).pan(0.6))
 
