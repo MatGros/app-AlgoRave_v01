@@ -62,9 +62,10 @@ class EditorEffects {
     animate() {
         if (!this.isRunning) return;
 
-        if (this.audioReactive && this.visualizer && this.visualizer.analyser) {
-            this.updateAudioReactiveBackground();
-        }
+        // DISABLED: Audio-reactive background to debug highlighting issues
+        // if (this.audioReactive && this.visualizer && this.visualizer.analyser) {
+        //     this.updateAudioReactiveBackground();
+        // }
 
         this.updateActiveLineHighlights();
 
@@ -223,17 +224,44 @@ class EditorEffects {
      * Clear highlight from a line
      */
     clearLineHighlight(lineNumber) {
-        this.editor.removeLineClass(lineNumber, 'background', 'line-executed');
-        this.editor.removeLineClass(lineNumber, 'wrap', 'line-executed-wrap');
-        
-        // Clean up inline styles
-        const lineElement = this.findLineBackgroundElement(lineNumber);
-        if (lineElement) {
-            lineElement.style.backgroundColor = '';
-            lineElement.style.borderLeft = '';
-            lineElement.style.boxShadow = '';
-            lineElement.style.position = '';
-            lineElement.style.zIndex = '';
+        try {
+            this.editor.removeLineClass(lineNumber, 'background', 'line-executed');
+            this.editor.removeLineClass(lineNumber, 'wrap', 'line-executed-wrap');
+
+            // Clean up inline styles
+            const lineElement = this.findLineBackgroundElement(lineNumber);
+            if (lineElement) {
+                lineElement.style.backgroundColor = '';
+                lineElement.style.borderLeft = '';
+                lineElement.style.boxShadow = '';
+                lineElement.style.position = '';
+                lineElement.style.zIndex = '';
+                lineElement.style.opacity = '';
+            }
+
+            // Also try to clean up all visible lines with this style (backup method)
+            const wrapper = this.editor.getWrapperElement();
+            const allLines = wrapper.querySelectorAll('.CodeMirror-line');
+            for (let el of allLines) {
+                if (el.style.borderLeft && el.style.borderLeft.includes('solid')) {
+                    // Check if this element corresponds to our line by checking its position
+                    const rect = el.getBoundingClientRect();
+                    const expectedCoords = this.editor.charCoords({ line: lineNumber, ch: 0 }, 'local');
+                    const wrapperRect = wrapper.getBoundingClientRect();
+                    const expectedTop = wrapperRect.top + expectedCoords.top;
+
+                    if (Math.abs(rect.top - expectedTop) < 2) {
+                        el.style.backgroundColor = '';
+                        el.style.borderLeft = '';
+                        el.style.boxShadow = '';
+                        el.style.position = '';
+                        el.style.zIndex = '';
+                        el.style.opacity = '';
+                    }
+                }
+            }
+        } catch (e) {
+            // Silently fail if line doesn't exist anymore
         }
     }
 

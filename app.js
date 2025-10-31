@@ -827,8 +827,8 @@ masterReset()`;
             }
 
             // Extract slot number (d1, d2, etc.)
-            const slotMatch = line.match(/d(\d)/);
-            
+            const slotMatch = line.match(/d(\d+)/);
+
             if (!slotMatch) {
                 errorCount++;
                 return;
@@ -844,9 +844,14 @@ masterReset()`;
 
             // Silence the specific slot
             const result = window.codeEvaluator.evaluate(`${slotId}(silence())`);
-            
+
             if (result.success) {
                 stoppedSlots.push(slotId);
+
+                // Also directly clear the highlight for this slot
+                if (this.editorEffects) {
+                    this.editorEffects.clearSlotHighlight(slotNumber);
+                }
             } else {
                 errorCount++;
             }
