@@ -222,6 +222,10 @@ masterReset()`;
             }
         });
 
+        // Initialize saved code hash BEFORE attaching listeners
+        this.savedCodeHash = this.hashCode(savedCode);
+        this.lastEditorLength = savedCode.length;
+
         // Auto-save code on changes
         this.editor.on('change', () => {
             const currentCode = this.editor.getValue();
@@ -233,12 +237,11 @@ masterReset()`;
             this.saveCode();
         });
 
-        // Initialize saved code hash (code is already saved at load time)
-        this.savedCodeHash = this.hashCode(savedCode);
-        this.lastEditorLength = savedCode.length;
-
-        // Initialize save button to "Saved!" state (code is fresh from server)
-        this.showSavedState();
+        // Delay showing "Saved!" state until after all initialization is complete
+        // This prevents CodeMirror's initialization events from triggering reset
+        setTimeout(() => {
+            this.showSavedState();
+        }, 100);
 
         console.log('CodeMirror initialized');
     }
