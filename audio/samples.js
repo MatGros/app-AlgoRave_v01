@@ -1,5 +1,5 @@
 /**
- * ALGORAVE - Sample Management
+ * AlgoSignalSound - Sample Management
  * Loads custom audio samples and provides fallback to synthesized drums
  */
 
@@ -14,11 +14,14 @@ class SampleLibrary {
 
         // Configuration: which samples to try loading
         this.sampleConfig = {
-            // Drum samples with numbered variations
+            // Drum samples with numbered variations - folders reflect current repo layout
             drums: {
                 'bd': { folder: 'kicks', count: 5, aliases: ['kick'] },
-                'sd': { folder: 'snares', count: 3, aliases: ['snare'] },
-                'hh': { folder: 'hats', count: 3, aliases: ['hat'] },
+                'sd': { folder: 'snares', count: 3, aliases: ['sd'] },
+                'hh': { folder: 'hats', count: 3, aliases: ['hh', 'hat'] },
+                'cp': { folder: 'claps', count: 3, aliases: ['cp'] },
+                'perc': { folder: 'perc', count: 3, aliases: ['perc'] },
+                'fx': { folder: 'fx', count: 3, aliases: ['fx'] },
                 'bass': { folder: 'bass', count: 5, aliases: ['bass'] }
             },
             // Custom samples (add your own here!)
@@ -40,6 +43,133 @@ class SampleLibrary {
             'clap': 'clap',
             'openhh': 'openhh'
         };
+
+        // Sample mode: when true, events with no sample will NOT use synth fallback
+        // To explicitly use synth, prefix sound name with "synth:" (e.g. "synth:clap")
+        this.SAMPLE_ONLY = true;
+    }
+
+    /**
+     * Generate a short synthetic clap rendered to an AudioBuffer using Offline rendering.
+     * This creates a sample-like buffer so that shorthands like 'cp' can use the player path
+     * and get consistent timing with other samples.
+     */
+    async generateSyntheticClap() {
+        try {
+            // Duration in seconds
+            const DURATION = 0.25;
+
+            // Use Tone.Offline to render a short noise-based clap
+            const rendered = await Tone.Offline(() => {
+                // Noise burst
+                const noise = new Tone.Noise('white').start();
+
+                // Short envelope
+                const env = new Tone.AmplitudeEnvelope({
+                    attack: 0.002,
+                    decay: 0.06,
+                    sustain: 0,
+                    release: 0.01
+                }).toDestination();
+
+                // Bandpass to shape the clap
+                const bp = new Tone.Filter(1400, 'bandpass');
+                noise.connect(bp);
+                bp.connect(env);
+
+                // Trigger
+                env.triggerAttackRelease(0.06, 0);
+                // stop noise slightly after
+                noise.stop(0.06 + 0.02);
+            }, DURATION);
+
+            // Wrap into Tone.Buffer and store
+            const buffer = new Tone.Buffer(rendered);
+            this.samples['clap1'] = buffer;
+            this.loadedCount++;
+            console.log('✓ Generated synthetic clap sample: clap1');
+        } catch (e) {
+            console.warn('Error generating synthetic clap sample:', e);
+            throw e;
+        }
+    }
+
+    /**
+     * Map base drum names (bd, sd, hh, etc.) to the first available loaded user sample
+     * Example: if kick1 is loaded, map 'bd' -> kick1 so s('bd') uses the sample instead of synth fallback
+     */
+    mapDrumAliases() {
+        for (const [drumName, config] of Object.entries(this.sampleConfig.drums)) {
+            // If base name already has a loaded buffer, skip
+            if (this.samples[drumName]) continue;
+
+            // Search aliases (kick, snare, hat...) for first loaded variation
+            let found = null;
+            for (const alias of config.aliases) {
+                for (let i = 1; i <= config.count; i++) {
+                    const candidate = `${alias}${i}`.toLowerCase();
+                    if (this.samples[candidate]) {
+                        found = candidate;
+                        break;
+                    }
+                }
+                if (found) break;
+            }
+
+            if (found) {
+                // Map base drum name to the first found alias buffer
+                this.samples[drumName] = this.samples[found];
+                console.log(`Mapped drum shorthand '${drumName}' -> '${found}'`);
+            }
+        }
+
+        // Also map synthFallback keys (e.g., 'cp' -> find 'clap1' or 'cp1')
+        for (const [shortName, longName] of Object.entries(this.synthFallback)) {
+            // If already mapped or loaded, skip
+            if (this.samples[shortName]) continue;
+
+            // Search for a loaded sample that matches either the shortName or the longName
+            let candidate = null;
+            // Exact matches first
+            if (this.samples[shortName]) candidate = shortName;
+            if (!candidate && this.samples[longName]) candidate = longName;
+
+            // Then try numbered variations (e.g., clap1, cp1, longName1)
+            if (!candidate) {
+                for (const name of Object.keys(this.samples)) {
+                    const lower = name.toLowerCase();
+                    if (lower.startsWith(shortName) || lower.startsWith(longName)) {
+                        candidate = name;
+                        break;
+                    }
+                }
+            }
+
+            if (candidate) {
+                this.samples[shortName] = this.samples[candidate];
+                console.log(`Mapped fallback shorthand '${shortName}' -> '${candidate}'`);
+            }
+        }
+
+        // If some common percussion shorthands still aren't mapped (no user sample available),
+        // map them to a best-effort existing sample to preserve timing consistency.
+        const bestEffortMap = {
+            'cp': ['sd', 'snare1', 'snare'], // clap -> try snare
+            'oh': ['hh', 'hat1', 'hh1'],      // open hat -> try hi-hat
+            'clap': ['sd', 'snare1'],
+            'openhh': ['hh', 'hat1']
+        };
+
+        for (const [shortName, candidates] of Object.entries(bestEffortMap)) {
+            if (this.samples[shortName]) continue; // already mapped
+            for (const c of candidates) {
+                if (this.samples[c]) {
+                    this.samples[shortName] = this.samples[c];
+                    console.log(`Best-effort mapped '${shortName}' -> '${c}'`);
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -71,8 +201,20 @@ class SampleLibrary {
 
         // Wait a bit for Tone.js to process all loaded samples
         await new Promise(resolve => setTimeout(resolve, 500));
+        // If no user clap sample exists, generate a synthetic clap sample so 'cp' can use a sample-player path
+        if (!this.samples['clap1'] && !this.samples['cp'] && !this.samples['clap']) {
+            try {
+                await this.generateSyntheticClap();
+            } catch (e) {
+                console.warn('Could not generate synthetic clap sample:', e);
+            }
+        }
 
-        this.loaded = true;
+        // Map base drum names (bd, sd, hh) to the first available user sample
+        // This makes shorthand names like 'bd' use user samples when available
+        this.mapDrumAliases();
+
+    this.loaded = true;
         console.log(`✓ Sample library ready: ${this.loadedCount} loaded, ${this.failedCount} total attempts`);
 
         // Log loaded samples for user reference
@@ -181,7 +323,7 @@ class SampleLibrary {
                 const timeout = setTimeout(() => {
                     if (!resolved) {
                         resolved = true;
-                        console.log(`  ✗ Timeout loading: ${name} from ${path}`);
+                        // Silent timeout for expected missing variations
                         this.failedCount++;
                         resolve();
                     }
@@ -208,8 +350,8 @@ class SampleLibrary {
                         resolved = true;
                         clearTimeout(timeout);
                         
-                        // Failed to load
-                        console.log(`  ✗ Failed: ${name} - ${err}`);
+                        // Failed to load - silent fail (expected for some numbered variations)
+                        // console.log(`  ✗ Skipped: ${name}`);
                         this.failedCount++;
                         resolve();
                     }
@@ -217,7 +359,8 @@ class SampleLibrary {
             } catch (error) {
                 if (!resolved) {
                     resolved = true;
-                    console.log(`  ✗ Exception loading ${name}: ${error.message}`);
+                    // Silent fail for expected missing variations
+                    // console.log(`  ✗ Exception loading ${name}: ${error.message}`);
                     this.failedCount++;
                     resolve();
                 }
@@ -249,10 +392,15 @@ class SampleLibrary {
 
         const lowerName = name.toLowerCase();
 
-        // Check if we have a loaded buffer
-        if (this.samples[lowerName]) {
+    // Check explicit synth prefix: if user wants synth, allow fallback even in SAMPLE_ONLY mode
+    const SYNTH_PREFIX = 'synth:';
+    const wantsSynth = lowerName.startsWith(SYNTH_PREFIX);
+    const requestedName = wantsSynth ? lowerName.slice(SYNTH_PREFIX.length) : lowerName;
+
+    // Check if we have a loaded buffer
+    if (this.samples[requestedName]) {
             try {
-                const buffer = this.samples[lowerName];
+        const buffer = this.samples[requestedName];
                 const player = this.getPoolPlayer();
 
                 // Stop the player first in case it's still playing from pool reuse
@@ -309,9 +457,17 @@ class SampleLibrary {
             }
         }
 
+        // No sample found. If SAMPLE_ONLY is enabled and the user did not explicitly request synth,
+        // do NOT fall back to synth automatically. Otherwise, fall back as before.
+        if (this.SAMPLE_ONLY && !wantsSynth) {
+            console.log(`[SampleOnly] No sample for '${name}' - event skipped (SAMPLE_ONLY mode)`);
+            return;
+        }
+
         // Fallback to synthesized drums (pass duration for proper timing)
         const duration = effects._duration || 0.1; // Default fallback
-        this.fallbackToSynth(lowerName, time, effects, duration);
+        const fallbackName = wantsSynth ? requestedName : lowerName;
+        this.fallbackToSynth(fallbackName, time, effects, duration);
     }
 
     /**

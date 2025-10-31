@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>AlgoRave - Sample Test</title>
+</head>
+<body>
+    <h1>Test des Samples</h1>
+    <button onclick="testSamples()">Tester les Samples</button>
+    <div id="output"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js"></script>
+    <script src="audio/samples.js"></script>
+    <script>
+        let output = document.getElementById('output');
+        
+        async function testSamples() {
+            output.innerHTML = '<p>🔄 Initialisation...</p>';
+            
+            // Initialize Tone
+            await Tone.start();
+            output.innerHTML += '<p>✓ Tone.js démarré</p>';
+            
+            // Create and init sample library
+            window.sampleLibrary = new SampleLibrary();
+            await window.sampleLibrary.init();
+            
+            output.innerHTML += '<p>✓ Sample library initialisée</p>';
+            
+            // Show loaded samples
+            const info = window.sampleLibrary.getInfo();
+            output.innerHTML += `<h3>Samples chargés (${info.loaded}):</h3>`;
+            output.innerHTML += `<pre>${info.samples.join('\n')}</pre>`;
+            
+            // Test playing samples
+            output.innerHTML += '<h3>Test de lecture:</h3>';
+            
+            setTimeout(() => {
+                output.innerHTML += '<p>🔊 Test kick...</p>';
+                window.sampleLibrary.play('kick', '+0.0', { gain: 0.8 });
+            }, 500);
+            
+            setTimeout(() => {
+                output.innerHTML += '<p>🔊 Test cp (clap)...</p>';
+                window.sampleLibrary.play('cp', '+0.0', { gain: 0.8 });
+            }, 1000);
+            
+            setTimeout(() => {
+                output.innerHTML += '<p>🔊 Test sd (snare)...</p>';
+                window.sampleLibrary.play('sd', '+0.0', { gain: 0.8 });
+            }, 1500);
+            
+            setTimeout(() => {
+                output.innerHTML += '<p>🔊 Test hh (hihat)...</p>';
+                window.sampleLibrary.play('hh', '+0.0', { gain: 0.8 });
+            }, 2000);
+            
+            setTimeout(() => {
+                output.innerHTML += '<p>✅ Test terminé!</p>';
+            }, 2500);
+        }
+    </script>
+</body>
+</html>

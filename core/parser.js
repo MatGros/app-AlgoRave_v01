@@ -1,5 +1,5 @@
 /**
- * ALGORAVE - Mini-Notation Parser
+ * AlgoSignalSound - Mini-Notation Parser
  * Parses TidalCycles-style mini-notation into pattern events
  *
  * Examples:

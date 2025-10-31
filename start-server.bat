@@ -29,7 +29,7 @@ if not exist "node_modules" (
 REM Start the server
 echo.
 echo ====================================
-echo  AlgoRave Server
+echo  AlgoSignalSound Server
 echo ====================================
 echo Starting on http://localhost:8000
 echo Press Ctrl+C to stop

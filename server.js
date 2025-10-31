@@ -1,5 +1,5 @@
 /**
- * ALGORAVE - Server
+ * AlgoSignalSound - Server
  * Handles code persistence and preset management
  */
 
@@ -159,14 +159,14 @@ app.post('/api/preset/:name', (req, res) => {
  * Health check endpoint
  */
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'AlgoRave server running' });
+    res.json({ status: 'ok', message: 'AlgoSignalSound server running' });
 });
 
 // Start server with port finding logic
 const startServer = (port) => {
     const server = app.listen(port, () => {
         console.log('\n========================================');
-        console.log('  ▶ ALGORAVE SERVER');
+    console.log('  ▶ AlgoSignalSound SERVER');
         console.log('========================================');
         console.log(`✓ Server running on http://localhost:${port}`);
         console.log('✓ Press Ctrl+C to stop');

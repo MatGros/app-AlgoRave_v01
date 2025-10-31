@@ -1,5 +1,5 @@
 /**
- * ALGORAVE - Pattern Class
+ * AlgoSignalSound - Pattern Class
  * Manages musical patterns with transformations
  */
 

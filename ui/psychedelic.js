@@ -1,5 +1,5 @@
 /**
- * ALGORAVE - Psychedelic Visuals
+ * AlgoSignalSound - Psychedelic Visuals
  * 2D/3D animated visuals that react to music
  */
 

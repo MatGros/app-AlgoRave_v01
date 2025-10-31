@@ -1,5 +1,5 @@
 /**
- * ALGORAVE - Master Effects Bus
+ * AlgoSignalSound - Master Effects Bus
  * Global effects applied to the entire mix using Tone.js
  */
 

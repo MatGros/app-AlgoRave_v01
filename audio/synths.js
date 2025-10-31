@@ -1,5 +1,5 @@
 /**
- * ALGORAVE - Synthesizers using Tone.js
+ * AlgoSignalSound - Synthesizers using Tone.js
  * Provides various synthesis engines for live coding
  */
 

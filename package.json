@@ -1,5 +1,5 @@
 {
-  "name": "algorave",
+  "name": "algosignalsound",
   "version": "1.0.0",
   "description": "Live coding music for fun and learning",
   "main": "server.js",
@@ -10,7 +10,7 @@
   "keywords": [
     "music",
     "live-coding",
-    "algorave",
+  "algosignalsound",
     "electronic"
   ],
   "author": "",

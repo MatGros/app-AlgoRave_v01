@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ALGORAVE - Live Coding Music for Fun and Learning</title>
+    <title>ALGO SIGNAL SOUND - Live Coding Music for Fun and Learning</title>
 
     <!-- CodeMirror CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
@@ -17,7 +17,7 @@
         <!-- Header -->
         <header class="header">
             <div class="header-left">
-                <h1 class="logo">▶ ALGORAVE</h1>
+                <h1 class="logo">▶ ALGO SIGNAL SOUND</h1>
                 <span class="tagline">live coding music for fun and learning</span>
             </div>
             <div class="header-right">
@@ -44,7 +44,7 @@
                 <div class="editor-toolbar">
                     <span class="help-text">Ctrl+Enter: evaluate line or selection | Ctrl+.: stop selected lines | Ctrl+Space: autocomplete</span>
                     <div class="toolbar-buttons">
-                        <button id="savePresetBtn" class="btn-save-preset" title="Save code to currently loaded preset">💾 Save to Preset</button>
+                        <button id="savePresetBtn" class="btn-save-preset" title="Save code to currently loaded preset">Save</button>
                         <select id="presetSelect" class="btn-preset" title="Load a preset">
                             <option value="">Load Preset...</option>
                         </select>
@@ -282,7 +282,7 @@ d6(silence())
                 <button id="clearConsole" class="btn-clear">Clear</button>
             </div>
             <div id="consoleOutput" class="console-output">
-                <div class="console-line success">✓ AlgoRave engine loaded</div>
+                <div class="console-line success">✓ AlgoSignalSound engine loaded</div>
                 <div class="console-line info">♪ Ready to code music...</div>
             </div>
         </div>
@@ -292,20 +292,29 @@ d6(silence())
     <div id="helpModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>ALGORAVE - Help & Examples</h2>
+                <h2>AlgoSignalSound - Help & Examples</h2>
                 <button class="modal-close" id="closeHelpBtn">&times;</button>
             </div>
             <div class="modal-body">
                 <section class="help-section">
                     <h3>🎵 Samples Audio Disponibles</h3>
                     <div class="samples-grid">
-                        <div class="sample-item"><code>kick1</code> à <code>kick5</code> - Kicks psytrance</div>
-                        <div class="sample-item"><code>snare1</code> à <code>snare3</code> - Snares</div>
-                        <div class="sample-item"><code>hat1</code> à <code>hat3</code> - Hi-hats</div>
-                        <div class="sample-item"><code>bass1</code> à <code>bass5</code> - 🆕 Bass psytrance</div>
+                        <div class="sample-item"><code>kick1</code> à <code>kick5</code> - Kicks (folder: <code>kick db/</code>)</div>
+                        <div class="sample-item"><code>sd1</code> à <code>sd3</code> - Snares (folder: <code>snares sd/</code>)</div>
+                        <div class="sample-item"><code>hh1</code>, <code>hh2</code>, <code>hat3</code> - Hi-hats (folder: <code>hats hh/</code>)</div>
+                        <div class="sample-item"><code>bass1</code> à <code>bass5</code> - Bass samples (folder: <code>bass/</code>)</div>
+                        <div class="sample-item"><code>cp1</code> à <code>cp3</code> - Claps (folder: <code>clap cp/</code>)</div>
+                        <div class="sample-item"><code>perc1</code> à <code>perc3</code> - Percussion (folder: <code>perc/</code>)</div>
+                        <div class="sample-item"><code>fx1</code> à <code>fx3</code> - FX / one-shots (folder: <code>fx/</code>)</div>
+                        <div class="sample-item"><code>(custom/)</code> - Dossier vide: placez vos samples personnalisés ici</div>
                     </div>
                     <p style="margin-top: 1rem; font-size: 0.9em; opacity: 0.8;">
-                        💡 Astuce: <code>s("kick1 kick2 kick3")</code> alterne entre les samples
+                        💡 Astuce: <code>s("kick1 kick2 kick3")</code> alterne entre les samples listés ci-dessus.
+                        Vous pouvez également appeler les tokens courts (ex. <code>sd</code>, <code>hh</code>, <code>cp</code>) si des fichiers correspondants existent.
+                    </p>
+                    <p style="margin-top: 0.5rem; font-size: 0.85em; opacity: 0.8;">
+                        ⚠️ Mode sample-first activé: si aucun sample n'existe pour un raccourci (ex. <code>bd</code> ou <code>cp</code>), l'événement peut être silencieux.
+                        Pour forcer l'utilisation du synth, préfixez le nom par <code>synth:</code> (ex. <code>synth:clap</code>), ou placez un fichier d'alias dans <code>samples/</code>.
                     </p>
                 </section>
 
@@ -875,6 +884,31 @@ hush()</code></pre>
     </div>
 
     <!-- Libraries -->
+    <!-- Filter console warnings BEFORE Tone.js loads -->
+    <script>
+        // Suppress benign browser policy warnings that appear before audio user gesture
+        (function() {
+            const originalWarn = console.warn;
+            const originalError = console.error;
+            
+            console.warn = function(...args) {
+                const msg = String(args[0] || '');
+                if (msg.includes('AudioContext') || 
+                    msg.includes('passive event listener')) {
+                    return;
+                }
+                originalWarn.apply(console, args);
+            };
+            
+            console.error = function(...args) {
+                const msg = String(args[0] || '');
+                if (msg.includes('AudioContext')) {
+                    return;
+                }
+                originalError.apply(console, args);
+            };
+        })();
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>

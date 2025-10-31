@@ -3,19 +3,10 @@
  * Live coding music for fun and learning
  */
 
-// Suppress expected browser warnings about AudioContext (normal behavior)
-(function() {
-    const originalWarn = console.warn;
-    console.warn = function(...args) {
-        const message = args[0];
-        if (typeof message === 'string' && 
-            (message.includes('AudioContext was not allowed to start') ||
-             message.includes('passive event listener'))) {
-            return; // Ignore these specific warnings
-        }
-        originalWarn.apply(console, args);
-    };
-})();
+/**
+ * Note: Console warning filters are applied in index.html before Tone.js loads
+ * to suppress benign AudioContext and event listener browser policy warnings.
+ */
 
 class AlgoRaveApp {
     constructor() {
@@ -23,7 +14,9 @@ class AlgoRaveApp {
         this.isInitialized = false;
         this.saveTimeout = null; // Debounce timer for auto-save
         this.currentPreset = null; // Track which preset is currently loaded
-        this.STORAGE_KEY = 'algorave_code';
+        this.AUTO_LOAD_PRESET = 'techno'; // preset to auto-load on refresh (set to null to disable)
+    this.LAST_PRESET_KEY = 'algorave_last_preset';
+    this.STORAGE_KEY = 'algorave_code';
         this.DEFAULT_CODE = `// PSYTRANCE SET - 140 BPM 🎵
 // 1. Click START first!
 // 2. Press Ctrl+Enter on each line to build the track
@@ -154,7 +147,7 @@ masterReset()`;
         }
 
         this.isInitialized = true;
-        this.log('AlgoRave initialized', 'success');
+            this.log('AlgoSignalSound initialized', 'success');
         this.log('Press Ctrl+Enter to evaluate code', 'info');
     }
 
@@ -374,8 +367,145 @@ masterReset()`;
             });
 
             this.log('✓ Presets loaded', 'success');
+
+            // Auto-load a preset on refresh if configured
+            try {
+                // Prefer the last known preset saved in localStorage
+                let presetToLoad = null;
+                try {
+                    const last = localStorage.getItem(this.LAST_PRESET_KEY);
+                    if (last) presetToLoad = last;
+                } catch (e) {
+                    // ignore localStorage errors
+                }
+
+                // Fallback to configured AUTO_LOAD_PRESET if no last preset
+                if (!presetToLoad && this.AUTO_LOAD_PRESET) {
+                    presetToLoad = this.AUTO_LOAD_PRESET;
+                }
+
+                if (presetToLoad) {
+                    const wanted = presetToLoad.toLowerCase();
+                    const found = presets.find(p => p.name.toLowerCase() === wanted);
+                    if (found) {
+                        await this.loadPreset(found.name);
+                        console.log(`Auto-loaded preset: ${found.name}`);
+                    }
+                }
+            } catch (e) {
+                console.warn('Auto-load preset failed:', e);
+            }
+            // After loading presets, run a compatibility check to warn about patterns
+            // that will be silent under SAMPLE_ONLY mode.
+            try {
+                if (window.sampleLibrary && window.parser) {
+                    this.validateAllPresets();
+                }
+            } catch (e) {
+                console.warn('Preset validation failed:', e);
+            }
         } catch (error) {
             console.warn('Could not load presets:', error);
+        }
+    }
+
+    /**
+     * Extracts mini-notation pattern strings from preset code.
+     * Looks for s("..."), note("..."), and bare pattern strings inside dN(...) calls.
+     */
+    extractPatternsFromCode(code) {
+        const patterns = [];
+        if (!code) return patterns;
+
+        // Match s("...") and s('...')
+        const reS = /s\(\s*["'`]([^"'`]+)["'`]\s*\)/g;
+        let m;
+        while ((m = reS.exec(code)) !== null) {
+            patterns.push(m[1]);
+        }
+
+        // Match note("...")
+        const reNote = /note\(\s*["'`]([^"'`]+)["'`]\s*\)/g;
+        while ((m = reNote.exec(code)) !== null) {
+            patterns.push(m[1]);
+        }
+
+        // Match generic string literals used as patterns: e.g. d1(s("bd sd")) handled above.
+        // Also try to catch direct calls like d1("bd sd")
+        const reDirect = /d\d+\(\s*["'`]([^"'`]+)["'`]\s*\)/g;
+        while ((m = reDirect.exec(code)) !== null) {
+            patterns.push(m[1]);
+        }
+
+        return patterns;
+    }
+
+    /**
+     * Validate a single preset by fetching its code and checking which sounds
+     * would be silent under SAMPLE_ONLY mode.
+     */
+    async validatePreset(presetName) {
+        try {
+            const resp = await fetch(`/api/preset/${presetName}`);
+            const data = await resp.json();
+            if (!data || !data.code) return [];
+            const code = data.code;
+            const patterns = this.extractPatternsFromCode(code);
+            const issues = [];
+
+            for (const pat of patterns) {
+                // Parse the pattern into events (parser expects mini-notation)
+                const events = window.parser.parse(pat, 16);
+                for (const ev of events) {
+                    const sound = (ev.sound || '').toString();
+                    if (!sound) continue;
+
+                    // allow explicit synth usage like synth:clap
+                    if (sound.startsWith('synth:')) continue;
+
+                    // If sampleLibrary.has returns false, warn
+                    if (!(window.sampleLibrary && window.sampleLibrary.has(sound))) {
+                        issues.push({ preset: presetName, pattern: pat, sound });
+                    }
+                }
+            }
+
+            return issues;
+        } catch (e) {
+            console.warn('validatePreset error', presetName, e);
+            return [];
+        }
+    }
+
+    /**
+     * Validate all presets and print a concise compatibility report to console.
+     */
+    async validateAllPresets() {
+        try {
+            const presets = await this.loadPresets();
+            const allIssues = [];
+            for (const p of presets) {
+                const issues = await this.validatePreset(p.name);
+                allIssues.push(...issues);
+            }
+
+            if (allIssues.length === 0) {
+                console.log('✓ Preset compatibility: all presets look OK for sample-only mode');
+                return;
+            }
+
+            console.log('ℹ️ Preset compatibility info (some presets use synths in SAMPLE_ONLY mode):');
+            // Group by preset
+            const byPreset = {};
+            for (const it of allIssues) {
+                byPreset[it.preset] = byPreset[it.preset] || new Set();
+                byPreset[it.preset].add(it.sound);
+            }
+            for (const [preset, sounds] of Object.entries(byPreset)) {
+                console.log(`  - ${preset}: uses synths -> ${Array.from(sounds).join(', ')}`);
+            }
+        } catch (e) {
+            console.log('validateAllPresets skipped', e.message);
         }
     }
 
@@ -835,6 +965,13 @@ masterReset()`;
                 // Track which preset is currently loaded
                 this.currentPreset = presetName;
 
+                // Persist last loaded preset in localStorage for auto-load on refresh
+                try {
+                    localStorage.setItem(this.LAST_PRESET_KEY, presetName);
+                } catch (e) {
+                    // Ignore if localStorage unavailable
+                }
+
                 // Update the dropdown to show current preset
                 const select = document.getElementById('presetSelect');
                 if (select) {
@@ -918,7 +1055,7 @@ masterReset()`;
             // Reset button after 2 seconds
             setTimeout(() => {
                 btn.classList.remove('saved');
-                btn.textContent = '💾 Save';
+                btn.textContent = 'Save';
             }, 2000);
         } catch (error) {
             console.error('[Save] FAILED:', error);
@@ -928,7 +1065,7 @@ masterReset()`;
 
             // Reset button after 2 seconds
             setTimeout(() => {
-                btn.textContent = '💾 Save';
+                btn.textContent = 'Save';
             }, 2000);
         }
     }
@@ -984,7 +1121,7 @@ masterReset()`;
             // Reset button after 2 seconds
             setTimeout(() => {
                 btn.classList.remove('saved');
-                btn.textContent = '💾 Save to Preset';
+                btn.textContent = 'Save';
             }, 2000);
 
         } catch (error) {
@@ -995,7 +1132,7 @@ masterReset()`;
 
             // Reset button after 2 seconds
             setTimeout(() => {
-                btn.textContent = '💾 Save to Preset';
+                btn.textContent = 'Save';
             }, 2000);
         }
     }

@@ -1,5 +1,5 @@
 /**
- * ALGORAVE - Pattern Scheduler
+ * AlgoSignalSound - Pattern Scheduler
  * Schedules and plays patterns using Tone.js Transport
  */
 

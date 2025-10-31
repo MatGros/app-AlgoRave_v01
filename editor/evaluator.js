@@ -1,5 +1,5 @@
 /**
- * ALGORAVE - Code Evaluator
+ * AlgoSignalSound - Code Evaluator
  * Evaluates user code and creates patterns
  */
 

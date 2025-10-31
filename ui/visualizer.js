@@ -1,5 +1,5 @@
 /**
- * ALGORAVE - Visualizations
+ * AlgoSignalSound - Visualizations
  * Timeline and scope visualizations
  */
 

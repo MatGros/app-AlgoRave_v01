@@ -1,4 +1,4 @@
-# ALGORAVE - Live Coding Music for Fun and Learning
+# ALGO SIGNAL SOUND - Live Coding Music for Fun and Learning
 
 A web-based live coding environment for making electronic music in real-time using code patterns and transformations.
 
@@ -71,62 +71,51 @@ d3(s("c3*4"))                     // Note repeated 4 times
 
 ### Rests/Silence
 
-```javascript
-d1(s("bd ~ sd ~"))                // ~ = rest/silence
+Vous pouvez maintenant charger vos propres samples dans `samples/`.
+
+Le moteur scanne automatiquement les dossiers au démarrage. Voici la
+configuration actuelle (dossier → fichiers) :
+
+```
+samples/
+  ├─ kick db/       - kick1.wav .. kick5.wav
+  ├─ snares sd/     - sd1.wav .. sd3.wav
+  ├─ hats hh/       - hh1.wav, hh2.wav, hat3.wav
+  ├─ clap cp/       - cp1.wav .. cp3.wav
+  ├─ perc/          - perc1.wav .. perc3.wav
+  ├─ fx/            - fx1.wav .. fx3.wav
+  ├─ bass/          - bass1.wav .. bass5.wav
+  └─ custom/        - (vide)
 ```
 
-### Alternation
+Conseils rapides :
+- Utilisez des noms courts et indexés pour les percussions : `bd1.wav`, `sd1.wav`,
+  `hh1.wav`, `cp1.wav`, etc.
+- Si vous conservez des noms originaux (comme `kick1.wav`), vous pouvez créer
+  des alias (`bd1.wav`) ou laisser `kick1.wav` intact — le moteur charge tous
+  les fichiers présents.
+
+Exemples d'utilisation :
 
 ```javascript
-d1(s("<bd sd> hh"))               // Alternates: bd-hh, then sd-hh
+// Voir les samples chargés dans la console
+samples()
+
+// Utilise bd1.wav si présent
+d1(s("bd1*4"))
+
+// Alternance entre plusieurs kicks
+d1(s("kick1 kick2 kick3"))
+
+// Custom samples du dossier /custom
+d2(s("bass bass ~ bass"))
 ```
 
-## Pattern Transformations
+Si un sample manque pour un raccourci (ex. `bd` ou `cp`), le pattern peut être
+silencieux en mode "sample-first". Pour forcer un synth, préfixez par
+`synth:` (ex. `synth:clap`).
 
-```javascript
-// Speed up x2
-d1(s("bd sd").fast(2))
-
-// Slow down x2
-d2(s("bd sd").slow(2))
-
-// Reverse
-d3(s("bd sd hh cp").rev())
-
-// Every N cycles
-d4(s("bd sd").every(4, fast(2)))
-
-// Probabilistic
-d5(s("bd sd").sometimes(fast(2)))  // 50% chance
-d6(s("bd sd").rarely(rev()))       // 25% chance
-d7(s("bd sd").often(fast(2)))      // 75% chance
-```
-
-## Effects
-
-### Pattern Effects (per-slot)
-
-```javascript
-// Volume/Gain (0-1, default 0.5)
-d1(s("bd sd").gain(0.8))           // Louder
-d2(s("hh*8").gain(0.2))            // Quieter
-
-// Reverb
-d3(s("bd sd").room(0.5))
-
-// Delay
-d4(s("bd sd").delay(0.3))
-
-// Low-pass filter
-d5(note("c3 e3 g3").lpf(800))
-
-// High-pass filter
-d6(s("bd sd").hpf(100))
-
-// Panning (0-1 or -1 to 1)
-d7(s("hh*8").pan(0.8))
-
-// Combine multiple effects
+Voir `samples/README.md` pour des instructions plus détaillées.
 d8(s("bd sd").gain(0.7).room(0.4).delay(0.2))
 ```
 
@@ -283,7 +272,7 @@ d2(silence())
 
 ## 🎵 Custom Samples (NEW!)
 
-You can now **load your own audio samples** into AlgoRave!
+You can now **load your own audio samples** into AlgoSignalSound!
 
 ### Quick Setup
 
@@ -331,7 +320,7 @@ d4(s("bass bass ~ bass"))  // Uses bass.wav if loaded
 
 ### Fallback to Synth
 
-If a sample file isn't found, AlgoRave automatically falls back to synthesized drums. This means you can use the same pattern whether samples are loaded or not!
+If a sample file isn't found, AlgoSignalSound automatically falls back to synthesized drums. This means you can use the same pattern whether samples are loaded or not!
 
 ```javascript
 // This works with or without samples:

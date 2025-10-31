@@ -1,5 +1,5 @@
 /**
- * ALGORAVE - Audio Effects
+ * AlgoSignalSound - Audio Effects
  * Manages audio effects using Tone.js
  */
 

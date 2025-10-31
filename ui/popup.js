@@ -1,5 +1,5 @@
 /**
- * ALGORAVE - Psychedelic Popup Manager
+ * AlgoSignalSound - Psychedelic Popup Manager
  * Handles dragging, resizing, and canvas management for fullscreen visuals
  */
 
