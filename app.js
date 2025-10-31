@@ -18,6 +18,7 @@ class AlgoRaveApp {
     this.LAST_PRESET_KEY = 'algorave_last_preset';
     this.STORAGE_KEY = 'algorave_code';
         this.savedCodeHash = null; // Track if code has been modified since save
+        this.isSaved = false; // Track if we just showed "Saved!" state
         this.DEFAULT_CODE = `// PSYTRANCE SET - 140 BPM 🎵
 // 1. Click START first!
 // 2. Press Ctrl+Enter on each line to build the track
@@ -222,8 +223,8 @@ masterReset()`;
 
         // Auto-save code on changes
         this.editor.on('change', () => {
-            // Check if code has been modified since last save
-            if (this.isCodeModified()) {
+            // If we were showing "Saved!", reset it when user types
+            if (this.isSaved) {
                 this.resetSaveButton();
             }
             this.saveCode();
@@ -268,6 +269,7 @@ masterReset()`;
         btn.classList.remove('saving');
         btn.classList.add('saved');
         btn.textContent = '✓ Saved!';
+        this.isSaved = true;
     }
 
     /**
@@ -280,6 +282,7 @@ masterReset()`;
         btn.classList.remove('saving');
         btn.classList.remove('saved');
         btn.textContent = 'Save';
+        this.isSaved = false;
     }
 
     /**
@@ -1033,6 +1036,10 @@ masterReset()`;
                     const data = await response.json();
                     if (data.success) {
                         console.log('[Auto-save] Code saved at', new Date().toLocaleTimeString());
+                        // Update hash after successful auto-save
+                        this.savedCodeHash = this.hashCode(code);
+                        // Show saved state
+                        this.showSavedState();
                     }
                 })
                 .catch(error => {
@@ -1175,13 +1182,11 @@ masterReset()`;
             // Save the code
             const result = await this.saveCodeImmediate();
 
-            // Show "saved" state
+            // Show "saved" state and update hash
             this.showSavedState();
+            this.savedCodeHash = this.hashCode(code);
             this.log(`Code saved to server (${code.length} chars)`, 'success');
             console.log('[Save] SUCCESS: Code was saved');
-
-            // Save the hash to track modifications
-            this.savedCodeHash = this.hashCode(code);
         } catch (error) {
             console.error('[Save] FAILED:', error);
             btn.classList.remove('saving');
