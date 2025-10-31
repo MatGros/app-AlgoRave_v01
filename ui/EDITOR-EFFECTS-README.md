@@ -20,15 +20,15 @@ window.app.editorEffects.setBaseHue(0);   // Rouge
 window.app.editorEffects.setBaseHue(200); // Bleu (défaut)
 ```
 
-### 2. **Surlignage des Lignes Actives** ✨
-Les lignes de code que vous exécutez (Ctrl+Enter) sont surlignées avec un effet lumineux **coloré selon le slot** et **persistent jusqu'à la prochaine exécution**.
+### 2. **Surlignage des Lignes Actives (Multi-Slot)** ✨
 
-**Comment ça marche :**
-- Placez votre curseur sur une ligne
-- Appuyez sur **Ctrl+Enter** pour l'exécuter
-- La ligne s'illumine avec la couleur du slot (d1=vert, d2=cyan, d3=rose, etc.)
-- Une bordure colorée apparaît à gauche de la ligne
-- L'effet persiste tant que vous n'exécutez pas une nouvelle ligne
+Les lignes de code que vous exécutez (Ctrl+Enter) sont surlignées avec un effet lumineux **coloré selon le slot** et **persistent par slot**.
+
+**Comportement :**
+
+- Chaque slot (d1, d2, d3, etc.) conserve le surlignage de sa dernière ligne exécutée
+- Quand vous exécutez une nouvelle ligne d'un slot, l'ancienne surlignage de ce slot disparaît et la nouvelle s'allume
+- Les autres slots gardent leurs surlignages respectifs (multi-slot simultané !)
 
 **Couleurs par Slot :**
 
@@ -43,8 +43,12 @@ Les lignes de code que vous exécutez (Ctrl+Enter) sont surlignées avec un effe
 
 **Exemple :**
 ```javascript
-d1(s("bd*4"))  // Appuyez Ctrl+Enter → ligne surlignée en VERT ! Persiste jusqu'à la prochaine exécution
-d2(s("hh*8"))  // Appuyez Ctrl+Enter → ligne surlignée en CYAN ! L'ancienne surbrillance d1 disparaît
+d1(s("bd*4"))    // Appuyez Ctrl+Enter → ligne surlignée en VERT 🟢
+d3(s("clap*2"))  // Appuyez Ctrl+Enter → ligne surlignée en ROSE 🩷
+                 // D1 reste VERT ! Les deux surlignages coexistent !
+
+d1(s("sn*8"))    // Appuyez Ctrl+Enter → ancien D1 disparaît, nouveau D1 s'illumine
+                 // D3 reste toujours ROSE ! 🩷
 ```
 
 ### 3. **Animation Fluide** 🌊

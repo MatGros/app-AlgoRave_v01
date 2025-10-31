@@ -16,10 +16,9 @@ class EditorEffects {
         this.lastVolume = 0;
         this.volumeSmooth = 0;
         
-        // Active line tracking
+        // Active line tracking - multi-slot system
         this.activeLines = new Map(); // Map of line number -> { timestamp, slotNumber, color }
-        this.lastSlotHighlighted = null; // Track which slot has the active highlight
-        this.lastHighlightedLine = null; // Track which line is highlighted
+        this.slotHighlights = new Map(); // Map of slot number -> { lineNumber, color }
         this.highlightDuration = Infinity; // Never auto-remove (persistent until new line)
         
         // Slot colors (matching pattern colors)
@@ -126,24 +125,26 @@ class EditorEffects {
 
     /**
      * Mark a line as active (just executed)
-     * Highlight persists until a different line from the same or different slot is executed
+     * Highlight persists per slot: each slot keeps its last highlighted line
+     * until a new line from the same slot is executed
      */
     markLineActive(lineNumber, slotNumber = null) {
         if (lineNumber == null) return;
 
-        // Clear the previous highlight if it exists
-        if (this.lastHighlightedLine !== null) {
-            this.clearLineHighlight(this.lastHighlightedLine);
-            this.activeLines.delete(this.lastHighlightedLine);
+        const color = slotNumber && this.slotColors[slotNumber] ? this.slotColors[slotNumber] : '#00ff88';
+
+        // If this slot had a previous highlight, clear it
+        if (this.slotHighlights.has(slotNumber)) {
+            const prevData = this.slotHighlights.get(slotNumber);
+            this.clearLineHighlight(prevData.lineNumber);
+            this.activeLines.delete(prevData.lineNumber);
         }
 
         const now = Date.now();
-        const color = slotNumber && this.slotColors[slotNumber] ? this.slotColors[slotNumber] : '#00ff88';
 
-        // Store the active line with persistent duration
+        // Store the active line for this slot
         this.activeLines.set(lineNumber, { timestamp: now, slotNumber, color });
-        this.lastHighlightedLine = lineNumber;
-        this.lastSlotHighlighted = slotNumber;
+        this.slotHighlights.set(slotNumber, { lineNumber, color });
 
         // Apply immediate highlight with slot color
         this.highlightLine(lineNumber, color);
