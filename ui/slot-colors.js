@@ -8,8 +8,8 @@ const SLOT_COLORS = {
     2: '#64B5F6', // Lighter Blue
     3: '#4DB6AC', // Teal
     4: '#FFB74D', // Lighter Orange
-    5: '#CDDC39', // Lime Green
-    6: '#FFF176', // Lighter Yellow
+    5: '#8BC34A', // Light Green
+    6: '#FFC107', // Amber
     7: '#BA68C8', // Lighter Purple
     8: '#4DD0E1', // Cyan
     9: '#F06292'  // Lighter Pink

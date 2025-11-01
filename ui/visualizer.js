@@ -101,8 +101,8 @@ class Visualizer {
 
         // Use shared slot colors from slot-colors.js
         const slotColors = window.getSlotColorsArray ? window.getSlotColorsArray() : [
-            '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A',
-            '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B'
+            '#E57373', '#64B5F6', '#4DB6AC', '#FFB74D',
+            '#8BC34A', '#FFC107', '#BA68C8', '#4DD0E1', '#F06292'
         ];
 
         // Draw pattern events with slot labels

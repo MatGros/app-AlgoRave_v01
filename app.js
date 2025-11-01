@@ -667,16 +667,6 @@ masterReset()`;
             this.hideExamples();
         });
 
-        // Toggle audio-reactive background button
-        document.getElementById('toggleAudioReactiveBtn').addEventListener('click', () => {
-            if (this.editorEffects) {
-                const isActive = this.editorEffects.toggleAudioReactive();
-                const btn = document.getElementById('toggleAudioReactiveBtn');
-                btn.textContent = isActive ? '🎨 BG FX ON' : '🎨 BG FX OFF';
-                btn.classList.toggle('active', isActive);
-                this.log(isActive ? 'Audio-reactive background enabled' : 'Audio-reactive background disabled', 'info');
-            }
-        });
 
         // Close examples modal when clicking outside
         document.getElementById('examplesModal').addEventListener('click', (e) => {
