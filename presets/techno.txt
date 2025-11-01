@@ -8,7 +8,16 @@ d1(s("hh*4").gain(0.8).room(0.2))
 d1(s("cp*4").gain(0.8).room(0.2))
 hush()
 d1(s("cp*4").gain(0.8))
-d1(s("bd sd hh cp"))
+
+d1(s("bd bd bd bd").gain(1.0))
+d2(s("bd sd hh cp").gain(0.5))
+d3(s("bd sd hh cp").gain(0.5))
+d4(s("bd sd hh cp").gain(0.5))
+d5(s("bd sd hh cp").gain(0.5))
+d6(s("bd sd hh cp").gain(0.5))
+d7(s("bd sd hh cp").gain(0.5))
+d8(s("bd sd hh cp").gain(0.5))
+d9(s("bd sd hh cp").gain(0.5))
 
 
 // Hi-hats subtils (16ths)
@@ -18,12 +27,13 @@ d2(s("hh*16").gain(0.25).pan(0.6))
 d3(s("~ cp ~ cp").gain(0.5).room(0.4))
 
 // Hypnotic bassline
-d4(note("c2 ~ c2 ~ eb2 ~ c2 ~").s("sawtooth").lpf(500).gain(0.65))
+d4(note("c2 ~ c2 ~ eb2 ~ c2 ~").s("sawtooth").lpf(500).gain(1.0))
 
 // Add depth with sub-bass
-d5(note("c1 ~ ~ ~ c1 ~ ~ ~").s("sine").lpf(200).gain(0.5))
+d5(note("c1 ~ ~ ~ c1 ~ ~ ~").s("sine").lpf(200).gain(1.0))
 
 // ====== BUILD UP ======
+
 
 // More energy to hi-hats
 d2(s("hh*16").gain(0.3).pan(0.65))

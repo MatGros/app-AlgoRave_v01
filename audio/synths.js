@@ -5,7 +5,6 @@
 
 class SynthEngine {
     constructor() {
-        this.synths = {};
         this.masterGain = null;
         this.initialized = false;
     }
@@ -17,12 +16,8 @@ class SynthEngine {
         if (this.initialized) return;
 
         // Start audio context (requires user interaction)
-        // Note: latencyHint is read-only after context is created
         await Tone.start();
         console.log('Audio context started');
-        console.log('Sample rate:', Tone.context.sampleRate);
-        console.log('Base latency:', Tone.context.baseLatency);
-        console.log('Latency hint:', Tone.context.latencyHint);
 
         // Initialize master bus first
         if (!window.masterBus.initialized) {
@@ -30,98 +25,70 @@ class SynthEngine {
         }
 
         // Connect to master bus instead of destination
-        this.masterGain = new Tone.Gain(0.7);
-        const limiter = new Tone.Limiter(-3).connect(this.masterGain);
-
-        // Route to master bus
+        this.masterGain = new Tone.Gain(1.0);
         this.masterGain.connect(window.masterBus.getInput());
-
-        // Create synth pool for different types
-        // Note: PolySynth in Tone.js v14 uses different syntax
-        // LIMITED to 16 voices max per synth to prevent memory issues
-        this.synths = {
-            sine: new Tone.PolySynth(Tone.Synth, {
-                maxPolyphony: 16,
-                options: {
-                    oscillator: { type: 'sine' },
-                    envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.5 }
-                }
-            }).connect(limiter),
-
-            square: new Tone.PolySynth(Tone.Synth, {
-                maxPolyphony: 16,
-                options: {
-                    oscillator: { type: 'square' },
-                    envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.3 }
-                }
-            }).connect(limiter),
-
-            sawtooth: new Tone.PolySynth(Tone.Synth, {
-                maxPolyphony: 16,
-                options: {
-                    oscillator: { type: 'sawtooth' },
-                    envelope: { attack: 0.01, decay: 0.15, sustain: 0.4, release: 0.5 }
-                }
-            }).connect(limiter),
-
-            triangle: new Tone.PolySynth(Tone.Synth, {
-                maxPolyphony: 16,
-                options: {
-                    oscillator: { type: 'triangle' },
-                    envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.4 }
-                }
-            }).connect(limiter),
-
-            fm: new Tone.PolySynth(Tone.FMSynth, {
-                maxPolyphony: 12,
-                options: {
-                    harmonicity: 3,
-                    modulationIndex: 10,
-                    envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.5 },
-                    modulation: { type: 'square' },
-                    modulationEnvelope: { attack: 0.01, decay: 0.1, sustain: 0.4, release: 0.2 }
-                }
-            }).connect(limiter),
-
-            am: new Tone.PolySynth(Tone.AMSynth, {
-                maxPolyphony: 12,
-                options: {
-                    harmonicity: 2,
-                    envelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 0.5 }
-                }
-            }).connect(limiter)
-        };
 
         this.initialized = true;
     }
 
     /**
      * Play a note with a specific synth
-     * @param {number} midiNote - MIDI note number
-     * @param {string} synthType - Type of synth
-     * @param {number} time - When to play (Tone.js time)
-     * @param {number} duration - How long to play
-     * @param {Object|number} effects - Effect settings {gain, room, delay, lpf, hpf, pan} or just gain for backward compat
      */
-    playNote(midiNote, synthType = 'sine', time = '+0', duration = '8n', effects = {gain: 1.0}) {
-        if (!this.initialized) {
-            console.warn('SynthEngine not initialized');
-            return;
+    playNote(midiNote, synthType = 'sine', time = '+0', duration = '8n', effects = {gain: 1.0}, slotId = null) {
+        if (!this.initialized) return;
+
+        try {
+            let synth;
+            const commonOptions = { envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.5 } };
+
+            switch (synthType) {
+                case 'fm':
+                    synth = new Tone.FMSynth({
+                        ...commonOptions,
+                        harmonicity: 3,
+                        modulationIndex: 10,
+                        modulation: { type: 'square' },
+                        modulationEnvelope: { attack: 0.01, decay: 0.1, sustain: 0.4, release: 0.2 }
+                    });
+                    break;
+                case 'am':
+                    synth = new Tone.AMSynth({
+                        ...commonOptions,
+                        harmonicity: 2
+                    });
+                    break;
+                default: // sine, square, sawtooth, triangle
+                    synth = new Tone.Synth({
+                        ...commonOptions,
+                        oscillator: { type: synthType }
+                    });
+                    break;
+            }
+
+            const effectChain = window.effectsEngine.createEffectChain(effects, synth);
+            const analyser = slotId ? window.slotAnalyser.createAnalyserForSlot(slotId) : null;
+
+            if (analyser) {
+                effectChain.connect(analyser);
+                analyser.connect(this.masterGain);
+            } else {
+                effectChain.connect(this.masterGain);
+            }
+
+            const frequency = Tone.Frequency(midiNote, 'midi').toFrequency();
+            synth.triggerAttackRelease(frequency, duration, time);
+
+            const cleanupTime = Tone.Time(time).toSeconds() + Tone.Time(duration).toSeconds() + 2;
+            Tone.Transport.scheduleOnce(() => {
+                try {
+                    synth.dispose();
+                    effectChain.dispose();
+                } catch (e) {}
+            }, cleanupTime);
+
+        } catch (e) {
+            console.warn(`Error playing note: ${e.message}`);
         }
-
-        // Backward compatibility: if effects is a number, treat it as gain
-        if (typeof effects === 'number') {
-            effects = { gain: effects };
-        }
-
-        if (!effects) effects = {};
-        const gain = effects.gain !== undefined ? effects.gain : 1.0;
-
-        const synth = this.synths[synthType] || this.synths.sine;
-        const frequency = Tone.Frequency(midiNote, 'midi').toFrequency();
-        const velocity = gain; // Use gain as velocity
-
-        synth.triggerAttackRelease(frequency, duration, time, velocity);
     }
 
     /**
@@ -131,7 +98,7 @@ class SynthEngine {
      * @param {Object|number} effects - Effect settings {gain, room, delay, lpf, hpf, pan} or just gain for backward compat
      * @param {number} duration - Duration of the drum (in seconds) - used for envelope timing
      */
-    playDrum(type, time = '+0', effects = {gain: 1.0}, duration = null) {
+    playDrum(type, time = '+0', effects = {gain: 1.0}, duration = null, slotId = null) {
         if (!this.initialized) return;
 
         // Backward compatibility: if effects is a number, treat it as gain
@@ -144,23 +111,23 @@ class SynthEngine {
         switch (type.toLowerCase()) {
             case 'bd':
             case 'kick':
-                this.playKick(time, effects, duration);
+                this.playKick(time, effects, duration, slotId);
                 break;
             case 'sd':
             case 'snare':
-                this.playSnare(time, effects, duration);
+                this.playSnare(time, effects, duration, slotId);
                 break;
             case 'hh':
             case 'hihat':
-                this.playHihat(time, effects, duration);
+                this.playHihat(time, effects, duration, slotId);
                 break;
             case 'cp':
             case 'clap':
-                this.playClap(time, effects, duration);
+                this.playClap(time, effects, duration, slotId);
                 break;
             case 'oh':
             case 'openhh':
-                this.playOpenHH(time, effects, duration);
+                this.playOpenHH(time, effects, duration, slotId);
                 break;
             default:
                 console.warn(`Unknown drum type: ${type}`);
@@ -173,7 +140,7 @@ class SynthEngine {
      * @param {Object} effects - Effect settings
      * @param {number} duration - Event duration in seconds (respects pattern timing)
      */
-    playKick(time, effects = {gain: 1.0}, duration = null) {
+    playKick(time, effects = {gain: 1.0}, duration = null, slotId = null) {
         // Ensure effects is an object
         if (typeof effects === 'number') {
             effects = { gain: effects };
@@ -199,8 +166,25 @@ class SynthEngine {
         // Create effect chain for this drum
         const effectChain = window.effectsEngine.createEffectChain(effects, sourceGain);
 
-        // Connect effect chain output to master bus
-        effectChain.connect(window.masterBus.getInput());
+        // Get analyser for this slot
+        const analyser = slotId ? window.slotAnalyser.createAnalyserForSlot(slotId) : null;
+
+        // Connect effect chain to analyser, then to master bus
+        if (analyser) {
+            effectChain.connect(analyser);
+            if (window.masterBus && typeof window.masterBus.getInput === 'function') {
+                analyser.connect(window.masterBus.getInput());
+            } else {
+                analyser.toDestination();
+            }
+        } else {
+            // No analyser, connect directly to master bus
+            if (window.masterBus && typeof window.masterBus.getInput === 'function') {
+                effectChain.connect(window.masterBus.getInput());
+            } else {
+                effectChain.toDestination();
+            }
+        }
 
         // Frequency envelope: pitch falls from 150 to 40 Hz
         osc.start(time).stop(time + kickDuration);
@@ -227,7 +211,7 @@ class SynthEngine {
      * @param {Object} effects - Effect settings
      * @param {number} duration - Event duration in seconds (respects pattern timing)
      */
-    playSnare(time, effects = {gain: 1.0}, duration = null) {
+    playSnare(time, effects = {gain: 1.0}, duration = null, slotId = null) {
         // Ensure effects is an object
         if (typeof effects === 'number') {
             effects = { gain: effects };
@@ -267,8 +251,25 @@ class SynthEngine {
         // Create effect chain for this drum
         const effectChain = window.effectsEngine.createEffectChain(effects, sourceGain);
 
-        // Connect effect chain output to master bus
-        effectChain.connect(window.masterBus.getInput());
+        // Get analyser for this slot
+        const analyser = slotId ? window.slotAnalyser.createAnalyserForSlot(slotId) : null;
+
+        // Connect effect chain to analyser, then to master bus
+        if (analyser) {
+            effectChain.connect(analyser);
+            if (window.masterBus && typeof window.masterBus.getInput === 'function') {
+                analyser.connect(window.masterBus.getInput());
+            } else {
+                analyser.toDestination();
+            }
+        } else {
+            // No analyser, connect directly to master bus
+            if (window.masterBus && typeof window.masterBus.getInput === 'function') {
+                effectChain.connect(window.masterBus.getInput());
+            } else {
+                effectChain.toDestination();
+            }
+        }
 
         noise.start(time).stop(time + snareDuration);
         noiseEnv.triggerAttackRelease(0.1, time);
@@ -298,7 +299,7 @@ class SynthEngine {
      * @param {Object} effects - Effect settings
      * @param {number} duration - Event duration (scheduler parameter - NOT used for envelope)
      */
-    playHihat(time, effects = {gain: 1.0}, duration = null) {
+    playHihat(time, effects = {gain: 1.0}, duration = null, slotId = null) {
         // Ensure effects is an object
         if (typeof effects === 'number') {
             effects = { gain: effects };
@@ -326,8 +327,25 @@ class SynthEngine {
         // Create effect chain for this drum
         const effectChain = window.effectsEngine.createEffectChain(effects, sourceGain);
 
-        // Connect effect chain output to master bus
-        effectChain.connect(window.masterBus.getInput());
+        // Get analyser for this slot
+        const analyser = slotId ? window.slotAnalyser.createAnalyserForSlot(slotId) : null;
+
+        // Connect effect chain to analyser, then to master bus
+        if (analyser) {
+            effectChain.connect(analyser);
+            if (window.masterBus && typeof window.masterBus.getInput === 'function') {
+                analyser.connect(window.masterBus.getInput());
+            } else {
+                analyser.toDestination();
+            }
+        } else {
+            // No analyser, connect directly to master bus
+            if (window.masterBus && typeof window.masterBus.getInput === 'function') {
+                effectChain.connect(window.masterBus.getInput());
+            } else {
+                effectChain.toDestination();
+            }
+        }
 
         noise.start(time).stop(time + hihatDuration);
         env.triggerAttackRelease(0.04, time);
@@ -352,7 +370,7 @@ class SynthEngine {
      * @param {Object} effects - Effect settings
      * @param {number} duration - Event duration in seconds (respects pattern timing)
      */
-    playClap(time, effects = {gain: 1.0}, duration = null) {
+    playClap(time, effects = {gain: 1.0}, duration = null, slotId = null) {
         // Ensure effects is an object
         if (typeof effects === 'number') {
             effects = { gain: effects };
@@ -380,8 +398,25 @@ class SynthEngine {
         // Create effect chain for this drum
         const effectChain = window.effectsEngine.createEffectChain(effects, sourceGain);
 
-        // Connect effect chain output to master bus
-        effectChain.connect(window.masterBus.getInput());
+        // Get analyser for this slot
+        const analyser = slotId ? window.slotAnalyser.createAnalyserForSlot(slotId) : null;
+
+        // Connect effect chain to analyser, then to master bus
+        if (analyser) {
+            effectChain.connect(analyser);
+            if (window.masterBus && typeof window.masterBus.getInput === 'function') {
+                analyser.connect(window.masterBus.getInput());
+            } else {
+                analyser.toDestination();
+            }
+        } else {
+            // No analyser, connect directly to master bus
+            if (window.masterBus && typeof window.masterBus.getInput === 'function') {
+                effectChain.connect(window.masterBus.getInput());
+            } else {
+                effectChain.toDestination();
+            }
+        }
 
         // Multiple hits for clap (fixed spacing)
         noise.start(time).stop(time + clapDuration);
@@ -409,7 +444,7 @@ class SynthEngine {
      * @param {Object} effects - Effect settings
      * @param {number} duration - Event duration in seconds (respects pattern timing)
      */
-    playOpenHH(time, effects = {gain: 1.0}, duration = null) {
+    playOpenHH(time, effects = {gain: 1.0}, duration = null, slotId = null) {
         // Ensure effects is an object
         if (typeof effects === 'number') {
             effects = { gain: effects };
@@ -437,8 +472,25 @@ class SynthEngine {
         // Create effect chain for this drum
         const effectChain = window.effectsEngine.createEffectChain(effects, sourceGain);
 
-        // Connect effect chain output to master bus
-        effectChain.connect(window.masterBus.getInput());
+        // Get analyser for this slot
+        const analyser = slotId ? window.slotAnalyser.createAnalyserForSlot(slotId) : null;
+
+        // Connect effect chain to analyser, then to master bus
+        if (analyser) {
+            effectChain.connect(analyser);
+            if (window.masterBus && typeof window.masterBus.getInput === 'function') {
+                analyser.connect(window.masterBus.getInput());
+            } else {
+                analyser.toDestination();
+            }
+        } else {
+            // No analyser, connect directly to master bus
+            if (window.masterBus && typeof window.masterBus.getInput === 'function') {
+                effectChain.connect(window.masterBus.getInput());
+            } else {
+                effectChain.toDestination();
+            }
+        }
 
         noise.start(time).stop(time + openHHDuration);
         env.triggerAttackRelease(0.15, time);

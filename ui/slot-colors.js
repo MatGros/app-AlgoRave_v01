@@ -4,15 +4,15 @@
  */
 
 const SLOT_COLORS = {
-    1: '#FF6B6B',  // Red
-    2: '#4ECDC4',  // Teal/Cyan
-    3: '#45B7D1',  // Blue
-    4: '#FFA07A',  // Light Salmon
-    5: '#98D8C8',  // Mint
-    6: '#F7DC6F',  // Yellow
-    7: '#BB8FCE',  // Purple
-    8: '#85C1E2',  // Light Blue
-    9: '#F8B88B'   // Peach
+    1: '#E57373', // Lighter Red
+    2: '#64B5F6', // Lighter Blue
+    3: '#4DB6AC', // Teal
+    4: '#FFB74D', // Lighter Orange
+    5: '#CDDC39', // Lime Green
+    6: '#FFF176', // Lighter Yellow
+    7: '#BA68C8', // Lighter Purple
+    8: '#4DD0E1', // Cyan
+    9: '#F06292'  // Lighter Pink
 };
 
 /**

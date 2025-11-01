@@ -56,7 +56,7 @@ class PatternScheduler {
         this.patterns.forEach((pattern, id) => {
             // Safety check: ensure pattern is valid
             if (pattern && typeof pattern.getEventsForCycle === 'function') {
-                this.schedulePattern(pattern, time, this.currentCycle);
+                this.schedulePattern(pattern, time, this.currentCycle, id);
             }
         });
 
@@ -97,7 +97,7 @@ class PatternScheduler {
     /**
      * Schedule a single pattern's events
      */
-    schedulePattern(pattern, time, cycleNumber) {
+    schedulePattern(pattern, time, cycleNumber, slotId) {
         const events = pattern.getEventsForCycle(cycleNumber);
 
         // Pass the complete effects object (including gain, room, delay, lpf, hpf, pan)
@@ -118,7 +118,7 @@ class PatternScheduler {
                 // Play sample/drum with complete effects and duration for timing
                 // Store duration in effects object for fallback synths
                 const effectsWithDuration = { ...effects, _duration: duration };
-                window.sampleLibrary.play(event.sound, eventTime, effectsWithDuration);
+                window.sampleLibrary.play(event.sound, eventTime, effectsWithDuration, slotId);
             } else if (pattern.type === 'note') {
                 // Play note with synth and complete effects
                 const synthType = pattern.synthType || 'sawtooth';
@@ -131,7 +131,8 @@ class PatternScheduler {
                     synthType,
                     eventTime,
                     duration + 's',
-                    effects
+                    effects,
+                    slotId
                 );
             }
         });

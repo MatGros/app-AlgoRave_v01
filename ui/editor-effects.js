@@ -21,18 +21,24 @@ class EditorEffects {
         this.slotHighlights = new Map(); // Map of slot number -> { lineNumber, color }
         this.highlightDuration = Infinity; // Never auto-remove (persistent until new line)
         
+        // Cache for line elements to improve performance
+        this.lineElementCache = new Map();
+
         // Use shared slot colors from slot-colors.js
         this.slotColors = window.SLOT_COLORS || {
             1: '#FF6B6B',  // Red
             2: '#4ECDC4',  // Teal
-            3: '#45B7D1',  // Blue
-            4: '#FFA07A',  // Light Salmon
-            5: '#98D8C8',  // Mint
+            3: '#4A90E2',  // Bright Blue
+            4: '#F5A623',  // Orange
+            5: '#50E3C2',  // Aqua Green
             6: '#F7DC6F',  // Yellow
             7: '#BB8FCE',  // Purple
             8: '#85C1E2',  // Light Blue
             9: '#F8B88B'   // Peach
         };
+
+        this.editor.on('change', this.handleEditorChange.bind(this));
+        this.editor.on('renderLine', this.handleRenderLine.bind(this));
     }
 
     /**
@@ -216,15 +222,23 @@ class EditorEffects {
      * Uses CodeMirror's lineInfo and DOM traversal for maximum reliability
      */
     findLineBackgroundElement(lineNumber) {
+        // Check cache first
+        if (this.lineElementCache.has(lineNumber)) {
+            return this.lineElementCache.get(lineNumber);
+        }
+
         try {
             // Get line info from CodeMirror - this is more reliable
             const lineInfo = this.editor.lineInfo(lineNumber);
-            if (!lineInfo || !lineInfo.handle) return null;
+            if (!lineInfo || !lineInfo.handle) {
+                return null;
+            }
 
             // Method 1: Try to get the line element directly from CodeMirror's internals
             if (this.editor.display && this.editor.display.lines) {
                 const lineView = this.editor.display.lineView(this.editor.getLineHandle(lineNumber));
                 if (lineView && lineView.node) {
+                    this.lineElementCache.set(lineNumber, lineView.node);
                     return lineView.node;
                 }
             }
@@ -242,6 +256,7 @@ class EditorEffects {
                 const rect = lineEl.getBoundingClientRect();
                 // Check if the element's top position matches our target line's top position
                 if (Math.abs(rect.top - coords.top) < 2) {
+                    this.lineElementCache.set(lineNumber, lineEl);
                     return lineEl;
                 }
             }
@@ -251,6 +266,7 @@ class EditorEffects {
             for (let pre of pres) {
                 const rect = pre.getBoundingClientRect();
                 if (Math.abs(rect.top - coords.top) < 2) {
+                    this.lineElementCache.set(lineNumber, pre);
                     return pre;
                 }
             }
@@ -327,12 +343,12 @@ class EditorEffects {
                     const slotId = `d${data.slotNumber}`;
                     const slotVolume = window.slotAnalyser.getVolume(slotId);
                     // Map volume to intensity: minimum 0.3 at silence, maximum 1 at peak
-                    volumeIntensity = 0.3 + slotVolume * 0.7;
+                    volumeIntensity = 0.5 + slotVolume * 0.5;
                 }
 
                 // Base opacity values
-                const bgOpacity = 0.3 * volumeIntensity;
-                const shadowOpacity = 0.4 * volumeIntensity;
+                const bgOpacity = 0.4 * volumeIntensity;
+                const shadowOpacity = 0.5 * volumeIntensity;
 
                 // Apply dynamic highlights based on volume
                 lineElement.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${bgOpacity})`;
@@ -389,6 +405,45 @@ class EditorEffects {
     getCurrentLineNumber() {
         const cursor = this.editor.getCursor();
         return cursor.line;
+    }
+
+    handleEditorChange(instance, change) {
+        this.lineElementCache.clear();
+
+        const fromLine = change.from.line;
+        const netLinesChanged = change.text.length - change.removed.length;
+
+        if (netLinesChanged !== 0) {
+            const newActiveLines = new Map();
+            this.activeLines.forEach((data, lineNumber) => {
+                if (lineNumber > fromLine) {
+                    const newLi = lineNumber + netLinesChanged;
+                    if(newLi > 0) newActiveLines.set(newLi, data);
+                } else {
+                    newActiveLines.set(lineNumber, data);
+                }
+            });
+            this.activeLines = newActiveLines;
+
+            const newSlotHighlights = new Map();
+            this.slotHighlights.forEach((data, slotNumber) => {
+                if (data.lineNumber > fromLine) {
+                    const newLi = data.lineNumber + netLinesChanged;
+                    if(newLi > 0) newSlotHighlights.set(slotNumber, { ...data, lineNumber: newLi });
+                } else {
+                    newSlotHighlights.set(slotNumber, data);
+                }
+            });
+            this.slotHighlights = newSlotHighlights;
+        }
+    }
+
+    handleRenderLine(instance, line, element) {
+        const lineNumber = this.editor.getLineNumber(line);
+        if (this.activeLines.has(lineNumber)) {
+            const data = this.activeLines.get(lineNumber);
+            this.highlightLine(lineNumber, data.color);
+        }
     }
 }
 

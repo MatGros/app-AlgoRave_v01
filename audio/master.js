@@ -79,8 +79,8 @@ class MasterBus {
 
         // Compressor (pour contrôler la dynamique)
         this.effects.compressor = new Tone.Compressor({
-            threshold: -20,  // dB
-            ratio: 4,        // Compression ratio
+            threshold: -12,  // dB
+            ratio: 3,        // Compression ratio
             attack: 0.003,   // Fast attack
             release: 0.25,   // Medium release
             knee: 10         // Soft knee
@@ -101,7 +101,7 @@ class MasterBus {
         });
 
         // Master gain (volume final)
-        this.effects.gain = new Tone.Gain(0.8);
+        this.effects.gain = new Tone.Gain(1.0);
 
         // Limiter (protection contre le clipping)
         this.effects.limiter = new Tone.Limiter(-1);

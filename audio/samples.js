@@ -235,7 +235,7 @@ class SampleLibrary {
      */
     initPlayerPool() {
         try {
-            const POOL_SIZE = 32; // Increased from 10 for better polyphony
+            const POOL_SIZE = 128; // Increased from 32 for better polyphony
 
             for (let i = 0; i < POOL_SIZE; i++) {
                 const player = new Tone.Player();
@@ -375,7 +375,7 @@ class SampleLibrary {
      * @param {Object|number} effects - Effect settings OR gain value for backward compatibility
      *        {gain: 1.0, room: 0, delay: 0, lpf: null, hpf: null, pan: 0.5}
      */
-    play(name, time = '+0', effects = {gain: 1.0}) {
+    play(name, time = '+0', effects = {gain: 1.0}, slotId = null) {
         if (!this.loaded) {
             console.warn('SampleLibrary not loaded yet');
             return;
@@ -426,11 +426,24 @@ class SampleLibrary {
                 // Create per-event effect chain
                 const effectChain = window.effectsEngine.createEffectChain(effects, player);
 
-                // Connect effect chain to master bus
-                if (window.masterBus && typeof window.masterBus.getInput === 'function') {
-                    effectChain.connect(window.masterBus.getInput());
+                // Get analyser for this slot
+                const analyser = slotId ? window.slotAnalyser.createAnalyserForSlot(slotId) : null;
+
+                // Connect effect chain to analyser, then to master bus
+                if (analyser) {
+                    effectChain.connect(analyser);
+                    if (window.masterBus && typeof window.masterBus.getInput === 'function') {
+                        analyser.connect(window.masterBus.getInput());
+                    } else {
+                        analyser.toDestination();
+                    }
                 } else {
-                    effectChain.toDestination();
+                    // No analyser, connect directly to master bus
+                    if (window.masterBus && typeof window.masterBus.getInput === 'function') {
+                        effectChain.connect(window.masterBus.getInput());
+                    } else {
+                        effectChain.toDestination();
+                    }
                 }
 
                 // Schedule and start playback
@@ -445,7 +458,7 @@ class SampleLibrary {
 
                     // Cleanup effect chain - NOW DISPOSES ALL NODES PROPERLY
                     try {
-                        effectChain.dispose();  // This now disposes ALL effect nodes, not just disconnects
+                        effectChain.dispose();
                     } catch (e) {
                         // Ignore cleanup errors
                     }
@@ -467,7 +480,7 @@ class SampleLibrary {
         // Fallback to synthesized drums (pass duration for proper timing)
         const duration = effects._duration || 0.1; // Default fallback
         const fallbackName = wantsSynth ? requestedName : lowerName;
-        this.fallbackToSynth(fallbackName, time, effects, duration);
+        this.fallbackToSynth(fallbackName, time, effects, duration, slotId);
     }
 
     /**
@@ -477,12 +490,12 @@ class SampleLibrary {
      * @param {Object} effects - Effect settings including gain, room, delay, etc.
      * @param {number} duration - Duration for this event (in seconds) - controls timing
      */
-    fallbackToSynth(lowerName, time, effects, duration) {
+    fallbackToSynth(lowerName, time, effects, duration, slotId) {
         const drumType = this.synthFallback[lowerName];
         if (drumType) {
             // DEBUG: Log when falling back to synth
             console.log(`[Fallback] ${lowerName} -> synth ${drumType} with effects:`, effects);
-            window.synthEngine.playDrum(drumType, time, effects, duration);
+            window.synthEngine.playDrum(drumType, time, effects, duration, slotId);
         } else {
             // Try to extract base drum name (e.g., kick0 -> kick)
             const baseName = lowerName.replace(/\d+$/, '');
@@ -490,7 +503,7 @@ class SampleLibrary {
 
             if (baseDrumType) {
                 console.log(`[Fallback] ${lowerName} -> synth ${baseDrumType} (from base name)`);
-                window.synthEngine.playDrum(baseDrumType, time, effects, duration);
+                window.synthEngine.playDrum(baseDrumType, time, effects, duration, slotId);
             } else {
                 console.warn(`Sample not found and no synth fallback: ${lowerName}`);
             }

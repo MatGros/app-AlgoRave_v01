@@ -222,20 +222,27 @@ masterReset()`;
             }
         });
 
-        // Initialize saved code hash BEFORE attaching listeners
-        this.savedCodeHash = this.hashCode(savedCode);
-        this.lastEditorLength = savedCode.length;
+        // Initialize saved code hash AFTER editor is fully initialized
+        // This ensures the hash is based on the editor's internal state (e.g., line endings)
+        const initialCode = this.editor.getValue();
+        this.savedCodeHash = this.hashCode(initialCode);
+        this.lastEditorLength = initialCode.length;
 
         // Auto-save code on changes
         this.editor.on('change', () => {
-            const currentCode = this.editor.getValue();
-            // Only reset "Saved!" if code length actually changed (add/delete content)
-            if (this.isSaved && currentCode.length !== this.lastEditorLength) {
-                this.resetSaveButton();
-            }
-            this.lastEditorLength = currentCode.length;
             this.saveCode();
         });
+
+        // Reset save button only on user-initiated changes
+        this.editor.on('beforeChange', (cm, change) => {
+            if (change.origin === '+input' || change.origin === '+delete' || change.origin === 'paste') {
+                this.resetSaveButtons();
+            }
+        });
+
+
+
+
 
         // Delay showing "Saved!" state until after all initialization is complete
         // This prevents CodeMirror's initialization events from triggering reset
@@ -266,7 +273,8 @@ masterReset()`;
     isCodeModified() {
         if (!this.savedCodeHash) return false;
         const currentCode = this.editor.getValue();
-        return this.hashCode(currentCode) !== this.savedCodeHash;
+        const currentHash = this.hashCode(currentCode);
+        return currentHash !== this.savedCodeHash;
     }
 
     /**
@@ -283,16 +291,21 @@ masterReset()`;
     }
 
     /**
-     * Reset save button to "Save" state
+     * Reset both save buttons to their default state
      */
-    resetSaveButton() {
-        const btn = document.getElementById('saveCodeBtn');
-        if (!btn) return;
+    resetSaveButtons() {
+        const saveBtn = document.getElementById('saveCodeBtn');
+        if (saveBtn) {
+            saveBtn.classList.remove('saving', 'saved');
+            saveBtn.textContent = 'Save';
+            this.isSaved = false;
+        }
 
-        btn.classList.remove('saving');
-        btn.classList.remove('saved');
-        btn.textContent = 'Save';
-        this.isSaved = false;
+        const presetBtn = document.getElementById('savePresetBtn');
+        if (presetBtn) {
+            presetBtn.classList.remove('saving', 'saved');
+            presetBtn.textContent = 'Save to Preset';
+        }
     }
 
     /**
@@ -979,6 +992,7 @@ masterReset()`;
         // Stop editor effects
         if (this.editorEffects) {
             this.editorEffects.stop();
+            this.editorEffects.clearAllHighlights();
         }
 
         // Update active patterns
@@ -1257,12 +1271,6 @@ masterReset()`;
             btn.textContent = '✓ Saved!';
             this.log(`✓ Code saved to preset: ${this.currentPreset}`, 'success');
             console.log('[Save Preset] SUCCESS: Preset was saved');
-
-            // Reset button after 2 seconds
-            setTimeout(() => {
-                btn.classList.remove('saved');
-                btn.textContent = 'Save';
-            }, 2000);
 
         } catch (error) {
             console.error('[Save Preset] FAILED:', error);
