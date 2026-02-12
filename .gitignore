@@ -8,6 +8,21 @@ yarn.lock
 user_data/
 user_data/*.txt
 
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+*.pem
+*.key
+*.cert
+*.crt
+config/secrets.json
+secrets.json
+credentials.json
+
 # OS
 .DS_Store
 Thumbs.db
@@ -24,3 +39,13 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# Build and distribution
+dist/
+build/
+*.min.js.map
+
+# Temporary files
+tmp/
+temp/
+*.tmp

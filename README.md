@@ -1,26 +1,55 @@
-# ALGO SIGNAL SOUND - Live Coding Music for Fun and Learning
+# 🎵 AlgoRave - AlgoSignalSound
 
-A web-based live coding environment for making electronic music in real-time using code patterns and transformations.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D%2014.0.0-brightgreen)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/express-4.18.2-blue)](https://expressjs.com/)
 
-## Features
+A **browser-based live coding environment** for creating electronic music in real-time through code. Write patterns, synthesize sounds, and apply effects dynamically - inspired by the live coding music movement and algorave culture.
 
-- **Pattern Slots** - Independent d1, d2, d3... slots for organizing patterns
-- **Mini-notation Parser** - Concise pattern language
-- **Live Coding** - Evaluate code line-by-line with Ctrl+Enter
-- **Pattern Transformations** - fast(), slow(), rev(), every(), etc.
-- **Audio Synthesis** - Tone.js-powered synths and drums
-- **Real-time Visualization** - Timeline and oscilloscope
-- **Effects** - Reverb, delay, filters, panning
-- **No Installation Required** - Runs entirely in the browser
+> **Personal Project** - This is a personal project developed for fun and learning, shared under the MIT License for the community.
 
-## Quick Start
+## ✨ Features
 
-1. Open [index.html](index.html) in a modern web browser
-2. **Important**: Click START button first (to initialize audio context)
-3. Use **slots** (d1, d2, d3...) to control patterns
-4. Press Ctrl+Enter on any line to evaluate
+- 🎹 **Pattern Slots** - 9 independent slots (d1-d9) for organizing patterns
+- 📝 **Mini-notation Parser** - Concise pattern language for rapid music creation
+- ⚡ **Live Coding** - Evaluate code line-by-line with Ctrl+Enter
+- 🔄 **Pattern Transformations** - fast(), slow(), rev(), every(), and more
+- 🎛️ **Audio Synthesis** - Tone.js-powered synths and drum machines
+- 📊 **Real-time Visualization** - Timeline and oscilloscope displays
+- 🎚️ **Master Effects** - Global effects bus for live transitions
+- 🎧 **Effects Processing** - Reverb, delay, filters, panning, compression
+- 🔊 **Custom Samples** - Load your own audio samples
+- 💾 **Auto-save** - Automatic code persistence
+- 📦 **Presets** - Save and load your musical patterns
+- 🌐 **No Installation Required** - Runs entirely in the browser
 
-**Note:** The first time you click START, the browser needs to initialize the audio context (user interaction required).
+## 🚀 Quick Start
+
+### Browser-only Mode (Simplest)
+
+1. Clone or download this repository
+2. Open `index.html` directly in a modern web browser
+3. Click the **START** button to initialize the audio context
+4. Start live coding!
+
+### With Server (Recommended for auto-save)
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Start the server:**
+   ```bash
+   npm start
+   ```
+   The server will run on `http://localhost:8000` (or next available port)
+
+3. **Open your browser** and navigate to `http://localhost:8000`
+
+4. **Click START** and start coding!
+
+**Note:** The first time you click START, the browser needs to initialize the audio context (user interaction required by web audio standards).
 
 ## Pattern Slots (Important!)
 
@@ -331,6 +360,63 @@ d1(s("bd sd hh sd"))  // Uses samples if available, synth if not
 
 ---
 
+## 🎼 Examples to Try
+
+Copy and paste these into the editor, then press Ctrl+Enter on each line:
+
+```javascript
+// Basic beat
+d1(s("bd sd hh sd"))
+
+// Speed it up
+d1(s("bd sd hh sd").fast(2))
+
+// Add a bassline
+d2(note("c2 eb2 g2 bb2").s("sawtooth").lpf(600))
+
+// Add effects
+d3(s("cp ~ ~ ~").room(0.9).delay(0.5))
+
+// Stack everything in one slot
+d4(stack(
+  s("bd*4"),
+  s("hh*8"),
+  note("c3 eb3 g3 bb3").s("fm").fast(2),
+  s("~ ~ sd ~").room(0.4)
+))
+
+// Stop everything
+hush()
+```
+
+## ⚙️ Audio Optimization
+
+### Latency Settings
+
+The app includes **3 latency modes** to optimize audio performance based on your system:
+
+1. **Low (Interactive)** - Minimal latency but may cause crackling on slower systems
+2. **Medium (Balanced)** - Good balance between latency and stability
+3. **High (Playback)** ★ **RECOMMENDED** - Maximum stability, slight latency increase
+
+**How to change:**
+1. Look for "Audio Settings" panel on the right
+2. Select your preferred latency mode
+3. Click STOP then START to apply
+
+### Audio Engine Configuration
+
+The app automatically optimizes several parameters:
+- **Latency Hint**: Configurable (interactive/balanced/playback)
+- **Transport lookAhead**: 0.2 seconds (schedules events ahead of time)
+- **Transport updateInterval**: 0.05 seconds (timing precision)
+- **Synth Polyphony**: Limited to 16 voices per synth to prevent memory saturation
+- **Node Cleanup**: Automatic disposal of audio nodes after playback
+
+These settings prevent the audio crackling/glitching issues that can occur during long sessions with many simultaneous patterns.
+
+---
+
 ## Sound Library
 
 ### Drums (use with `s()`)
@@ -360,7 +446,9 @@ note("f#5")    // F-sharp in octave 5
 d1(note("c3 e3 g3 c4"))  // C major arpeggio
 ```
 
-## Architecture
+---
+
+## 🏗️ Architecture
 
 ```
 /core/
@@ -368,7 +456,7 @@ d1(note("c3 e3 g3 c4"))  // C major arpeggio
   - pattern.js      // Pattern class with transformations
 
 /audio/
-  - master.js       // Master effects bus (NEW!)
+  - master.js       // Master effects bus
   - synths.js       // Tone.js synthesizers
   - samples.js      // Sample management
   - effects.js      // Audio effects (per-pattern)
@@ -393,94 +481,92 @@ Master Bus → HPF → LPF → Compressor → Reverb → Delay → Gain → Limi
 Speakers 🔊
 ```
 
-## Audio Optimization
+## 🛠️ Technologies
 
-### Latency Settings
+- **[Tone.js v14](https://tonejs.github.io/)** - Web Audio framework for synthesis and scheduling
+- **[CodeMirror 5](https://codemirror.net/)** - Professional code editor with syntax highlighting
+- **[Express.js](https://expressjs.com/)** - Lightweight web server for preset management
+- **Web Audio API** - Native browser audio synthesis and processing
+- **Canvas API** - Real-time audio visualizations
 
-The app includes **3 latency modes** to optimize audio performance based on your system:
+## 🎯 Philosophy
 
-1. **Low (Interactive)** - Minimal latency but may cause crackling on slower systems
-2. **Medium (Balanced)** - Good balance between latency and stability
-3. **High (Playback)** ★ **RECOMMENDED** - Maximum stability, slight latency increase
+Inspired by the live coding music movement and algorave culture, this tool enables musicians to create and manipulate electronic music in real-time through code, making the creative process transparent, improvisational, and educational.
 
-**How to change:**
-1. Look for "Audio Settings" panel on the right
-2. Select your preferred latency mode
-3. Click STOP then START to apply
+## 🌐 Browser Support
 
-### Audio Engine Configuration
+Works best in modern browsers with Web Audio API support:
+- ✅ Chrome/Edge (recommended)
+- ✅ Firefox
+- ✅ Safari
+- ✅ Opera
 
-The app automatically optimizes several parameters:
-- **Latency Hint**: Configurable (interactive/balanced/playback)
-- **Transport lookAhead**: 0.2 seconds (schedules events ahead of time)
-- **Transport updateInterval**: 0.05 seconds (timing precision)
-- **Synth Polyphony**: Limited to 16 voices per synth to prevent memory saturation
-- **Node Cleanup**: Automatic disposal of audio nodes after playback
+Requires a browser that supports:
+- Web Audio API
+- ES6+ JavaScript
+- Canvas API
 
-These settings prevent the audio crackling/glitching issues that can occur during long sessions with many simultaneous patterns.
-
-## Technologies
-
-- **[Tone.js v14](https://tonejs.github.io/)** - Web Audio framework
-- **[CodeMirror 5](https://codemirror.net/)** - Code editor
-- **Web Audio API** - Audio synthesis
-- **Canvas API** - Visualizations
-
-## Philosophy
-
-Inspired by the live coding music movement, this tool enables musicians to create and manipulate electronic music in real-time through code, making the creative process transparent and improvisational.
-
-## Browser Support
-
-Works best in:
-- Chrome/Edge (recommended)
-- Firefox
-- Safari
-- Opera
-
-Requires a modern browser with Web Audio API support.
-
-## Tips for Live Coding
+## 💡 Tips for Live Coding
 
 1. **Use slots** - d1, d2, d3 keep things organized
 2. **Start simple** - Begin with one drum pattern in d1
 3. **Build incrementally** - Add patterns one slot at a time
 4. **Update live** - Re-evaluate any slot to change it instantly
 5. **Experiment!** - Try random combinations and see what happens
+6. **Master effects** - Use global effects for dramatic live transitions
 
-## Examples to Try
+## 🤝 Contributing
 
-Copy and paste these into the editor, then press Ctrl+Enter on each line:
+This is a personal project, but contributions, issues, and feature requests are welcome!
 
-```javascript
-// Basic beat
-d1(s("bd sd hh sd"))
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-// Speed it up
-d1(s("bd sd hh sd").fast(2))
+## 📝 License
 
-// Add a bassline
-d2(note("c2 eb2 g2 bb2").s("sawtooth").lpf(600))
+This project is licensed under the **MIT License** - see below for details.
 
-// Add effects
-d3(s("cp ~ ~ ~").room(0.9).delay(0.5))
+```
+MIT License
 
-// Stack everything in one slot
-d4(stack(
-  s("bd*4"),
-  s("hh*8"),
-  note("c3 eb3 g3 bb3").s("fm").fast(2),
-  s("~ ~ sd ~").room(0.4)
-))
+Copyright (c) 2026 MatGros
 
-// Stop everything
-hush()
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
 
-## License
+## 👤 Author
 
-Free and open for creative use. Make music!
+**MatGros**
+- Personal project for fun and learning
+- Shared with the community under MIT License
+
+## 🙏 Acknowledgments
+
+- Inspired by [TidalCycles](https://tidalcycles.org/), [Sonic Pi](https://sonic-pi.net/), and the live coding community
+- Built with [Tone.js](https://tonejs.github.io/) by Yotam Mann
+- Code editor powered by [CodeMirror](https://codemirror.net/)
 
 ---
 
 **Happy live coding!** 🎵💻✨
+
+Made with ❤️ for the algorave and live coding community
